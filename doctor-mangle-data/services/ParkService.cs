@@ -1,12 +1,12 @@
 ﻿using doctor_mangle.constants;
+using doctor_mangle.interfaces;
 using doctor_mangle.models.factories;
-using doctor_mangle.models.parts;
 using doctor_mangle_data.models;
 using System;
 
 namespace doctor_mangle.services
 {
-    public class ParkService
+    public class ParkService : IParkService
     {
         public ParkData[] GenerateParks()
         {

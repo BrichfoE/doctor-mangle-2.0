@@ -1,4 +1,5 @@
 ﻿using doctor_mangle.constants;
+using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.parts;
 using doctor_mangle.services;
@@ -19,7 +20,7 @@ namespace DrMangle
         public ArenaBattleCalculator Arena { get; set; }
         public PlayerManager PlayerManager { get; set; }
         public PlayerData[] AllPlayers { get; set; }
-        private ParkService _parkService { get; set; }
+        private IParkService _parkService { get; set; }
         private Random RNG = new Random();
         private string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
 

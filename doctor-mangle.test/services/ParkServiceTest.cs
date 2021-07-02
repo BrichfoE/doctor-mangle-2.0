@@ -1,19 +1,23 @@
 ﻿using doctor_mangle.constants;
+using doctor_mangle.interfaces;
 using doctor_mangle.models.parts;
 using doctor_mangle.services;
 using doctor_mangle_data.models;
+using Moq;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using Moq;
 
 namespace doctor_mangle.test.services
 {
     [TestFixture]
     public class ParkServiceTest
     {
-        private ParkService _service;
+        // public ParkServiceTest(IParkServiceT parkServiceTest)
+        // {
+        //     _service = parkServiceTest;
+        // }
+        
+        private IParkService _service;
 
         [OneTimeSetUp]
         public void Init()
