@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using doctor_mangle.services;
+using doctor_mangle_data.models;
 using Newtonsoft.Json;
-using System.IO;
+using System;
+using System.Collections.Generic;
 
 namespace DrMangle
 {
@@ -12,14 +10,14 @@ namespace DrMangle
     {
         public string GameName { get; set; }
         public int GameDataId { get; set; }
-        public ParkManager CurrentLevel { get; set; }
+        public ParkData[] Parks { get; set; }
         public ArenaBattleCalculator Arena { get; set; }
         public int CurrentRegion { get; set; }
         public string RegionText
         {
             get
             {
-                return CurrentLevel.Locations[CurrentRegion].ParkName;
+                return Parks[CurrentRegion].ParkName;
             }
         }
         public PlayerData CurrentPlayer { get; set; }
@@ -39,7 +37,9 @@ namespace DrMangle
             AiPlayers = new PlayerData[aiCount];
             GenerateAI(AiPlayers);
 
-            CurrentLevel = new ParkManager(RNG, AiPlayers.Length + 1);
+            var _parkService = new ParkService();
+            Parks = _parkService.GenerateParks();
+            Parks = _parkService.AddParts(Parks, RNG, AiPlayers.Length + 1);
             CurrentPlayer = new PlayerData(name, false);
             Graveyard = new List<MonsterGhost>();
 
@@ -67,11 +67,11 @@ namespace DrMangle
             {
                 if (CurrentRegion == i)
                 {
-                    Console.WriteLine(i + " - Stay in the " + CurrentLevel.Locations[i].ParkName);
+                    Console.WriteLine(i + " - Stay in the " + Parks[i].ParkName);
                 }
                 else
                 {
-                    Console.WriteLine(i + " - Go to the " + CurrentLevel.Locations[i].ParkName);
+                    Console.WriteLine(i + " - Go to the " + Parks[i].ParkName);
                 }
             }
 

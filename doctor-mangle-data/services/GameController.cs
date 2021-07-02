@@ -1,6 +1,7 @@
 ﻿using doctor_mangle.constants;
 using doctor_mangle.models;
 using doctor_mangle.models.parts;
+using doctor_mangle.services;
 using doctor_mangle.utility;
 using DrMangle.Service;
 using System;
@@ -18,6 +19,7 @@ namespace DrMangle
         public ArenaBattleCalculator Arena { get; set; }
         public PlayerManager PlayerManager { get; set; }
         public PlayerData[] AllPlayers { get; set; }
+        private ParkService _parkService { get; set; }
         private Random RNG = new Random();
         private string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
 
@@ -29,6 +31,7 @@ namespace DrMangle
             Repo = new GameRepo();
             Arena = new ArenaBattleCalculator();
             PlayerManager = new PlayerManager();
+            _parkService = new ParkService();
 
             Repo.FileSetup();
             //StaticUtility.TalkPause("Welcome to the Isle of Dr. Mangle.");
@@ -174,8 +177,8 @@ namespace DrMangle
             try
             {
                 SortPlayersByWins();
-                Data.CurrentLevel.AddParts(RNG, AllPlayers.Length);
-                Data.CurrentLevel.HalveParts();
+                Data.Parks = _parkService.AddParts(Data.Parks, RNG, AllPlayers.Length);
+                Data.Parks = _parkService.HalveParts(Data.Parks);
                 Data.GameDayNumber++;
                 Repo.SaveGame(Data);
             }
@@ -272,10 +275,10 @@ namespace DrMangle
             foreach (var ai in gd.AiPlayers)
             {
                 int region = RNG.Next(1, 4);
-                if (gd.CurrentLevel.Locations[region].PartsList.Count != 0)
+                if (gd.Parks[region].PartsList.Count != 0)
                 {
-                    ai.Bag[round - 1] = gd.CurrentLevel.Locations[region].PartsList.Last.Value;
-                    gd.CurrentLevel.Locations[region].PartsList.RemoveLast();
+                    ai.Bag[round - 1] = gd.Parks[region].PartsList.Last.Value;
+                    gd.Parks[region].PartsList.RemoveLast();
                 }
             }
         }
@@ -304,20 +307,20 @@ namespace DrMangle
                         searching = status;
                         break;
                     case 1:
-                        if (Data.CurrentLevel.Locations[Data.CurrentRegion].PartsList.Count == 0)
+                        if (Data.Parks[Data.CurrentRegion].PartsList.Count == 0)
                         {
                             Console.WriteLine("There are no more parts in this region");
                         }
                         else
                         {
-                            Data.CurrentPlayer.Bag[bagSlot] = Data.CurrentLevel.Locations[Data.CurrentRegion].PartsList.Last();
-                            Data.CurrentLevel.Locations[Data.CurrentRegion].PartsList.RemoveLast();
+                            Data.CurrentPlayer.Bag[bagSlot] = Data.Parks[Data.CurrentRegion].PartsList.Last();
+                            Data.Parks[Data.CurrentRegion].PartsList.RemoveLast();
                             Console.WriteLine("You found: " + Data.CurrentPlayer.Bag[bagSlot].PartName);
                         }
                         searching = false;
                         break;
                     case 2:
-                        foreach (var park in Data.CurrentLevel.Locations)
+                        foreach (var park in Data.Parks)
                             Console.WriteLine("There are " + park.PartsList.Count + " parts left in the " + park.ParkName + ".");
                         searching = false;
                         break;

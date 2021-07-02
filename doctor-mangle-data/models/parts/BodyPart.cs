@@ -22,6 +22,7 @@ namespace doctor_mangle.models.parts
         public virtual Part PartType { get; set; }
         public Structure PartStructure { get; set; }
         public Rarity PartRarity { get; set; }
+        public bool? IsLeftSide { get; set; }
         public Dictionary<Stat, float> PartStats { get => _stats; }
 
         public float[] Stats { get; set; }

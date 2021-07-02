@@ -5,7 +5,7 @@ using System;
 
 namespace doctor_mangle.models.factories
 {
-    public class LegFactory : PairedBodyPartFactory
+    public class LegFactory : BodyPartFactory
     {
         public LegFactory(Structure? structure) : base(structure)
         {
