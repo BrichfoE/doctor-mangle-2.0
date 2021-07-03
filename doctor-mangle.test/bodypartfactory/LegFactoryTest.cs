@@ -4,7 +4,7 @@ using doctor_mangle.models.parts;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace doctor_mangle.bodypartfactory
+namespace doctor_mangle.test.bodypartfactory
 {
     [TestFixture]
     public class LegFactoryTest
@@ -39,7 +39,7 @@ namespace doctor_mangle.bodypartfactory
             // act
             Part result = _leg.PartType;
 
-            // assert          
+            // assert
             Assert.IsNotNull(result);
             Assert.AreEqual(Part.leg, result);
         }
@@ -59,11 +59,11 @@ namespace doctor_mangle.bodypartfactory
             string name = _leg.PartName;
             var result = name.Substring(name.Length - expected.Length, expected.Length);
 
-            // assert          
+            // assert
             Assert.IsNotNull(isLeft);
-            Assert.AreEqual(expected, result);            
+            Assert.AreEqual(expected, result);
         }
-        
+
         [Test]
         public void GenerateBodyPart_PartDurability_IsNotNull_Equals1()
         {
@@ -109,7 +109,7 @@ namespace doctor_mangle.bodypartfactory
             // arrange
             Setup();
 
-            // act            
+            // act
             Rarity result = _leg.PartRarity;
 
             // assert

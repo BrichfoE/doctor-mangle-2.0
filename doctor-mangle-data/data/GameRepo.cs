@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace DrMangle
+namespace doctor_mangle
 {
     public class GameRepo
     {
@@ -14,7 +14,7 @@ namespace DrMangle
         public Dictionary<string, int> gameIndex;
 
         public void FileSetup()
-        {      
+        {
             if (!Directory.Exists(filePath))
             {
                 Directory.CreateDirectory(filePath);
@@ -58,7 +58,7 @@ namespace DrMangle
                 {
                     gameIndex.Add(gd.GameName, gd.GameDataId);
                     File.WriteAllText(Path.Combine(filePath, "Save\\Index.txt"), JsonConvert.SerializeObject(gameIndex, Formatting.Indented));
-                }   
+                }
             }
 
             File.WriteAllText(saveFile, JsonConvert.SerializeObject(gd, Formatting.Indented));

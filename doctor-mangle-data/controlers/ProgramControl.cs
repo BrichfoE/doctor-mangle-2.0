@@ -2,7 +2,7 @@
 
 namespace doctor_mangle_data.controllers
 {
-    // Singleton pattern - using this to ensure that the overall game management class 
+    // Singleton pattern - using this to ensure that the overall game management class
     //     only has one instance which is universally accessible
     public sealed class ProgramControl
     {
@@ -14,6 +14,6 @@ namespace doctor_mangle_data.controllers
         }
 
         public static ProgramControl GetProgramControl() => instance;
-        
+
     }
 }

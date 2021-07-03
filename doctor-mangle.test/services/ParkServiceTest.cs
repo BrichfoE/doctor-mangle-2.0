@@ -3,9 +3,7 @@ using doctor_mangle.interfaces;
 using doctor_mangle.models.parts;
 using doctor_mangle.services;
 using doctor_mangle_data.models;
-using Moq;
 using NUnit.Framework;
-using System;
 
 namespace doctor_mangle.test.services
 {
@@ -16,7 +14,7 @@ namespace doctor_mangle.test.services
         // {
         //     _service = parkServiceTest;
         // }
-        
+
         private IParkService _service;
 
         [OneTimeSetUp]
@@ -61,7 +59,7 @@ namespace doctor_mangle.test.services
                 Structure.Rock,
                 0
             };
-            
+
             //act
             var actual = _service.GenerateParks();
 
@@ -84,16 +82,12 @@ namespace doctor_mangle.test.services
         public void AddParts(Structure structure, Part partType)
         {
             // arrange
-            var parks = new ParkData[1] { 
-                new ParkData() { 
+            var parks = new ParkData[1] {
+                new ParkData() {
                     ParkPart = structure
-                } 
+                }
             };
-            var mockRng = new Mock<Random>();
-            mockRng.Setup(x => x.Next(
-                It.IsAny<int>(), 
-                It.IsAny<int>()))
-                .Returns((int)partType);
+            var mockRng = TestUtils.GetMockRandom_Next((int)partType);
 
             // act
             var actual = _service.AddParts(parks, mockRng.Object, 1);
@@ -131,7 +125,7 @@ namespace doctor_mangle.test.services
                 parkData.PartsList.AddLast(new Head());
             }
             var locations = new ParkData[1] { parkData };
-            
+
             //act
             var actual = _service.HalveParts(locations);
 

@@ -14,7 +14,7 @@ namespace doctor_mangle.models.factories
         public override void GenerateBodyPart(Structure? structure)
         {
             this._bodyPart = new Head();
-            
+
             Random _rng = new Random();
             this._bodyPart.PartDurability = 1;
 

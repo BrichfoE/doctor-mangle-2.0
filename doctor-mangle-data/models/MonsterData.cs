@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DrMangle
+namespace doctor_mangle
 {
     public abstract class MonsterBase
     {
@@ -47,7 +47,7 @@ namespace DrMangle
                 MonsterStats = _monsterStats;
             }
         }
-        public bool CanFight { get 
+        public bool CanFight { get
             {
                 return CanFightNow();
             }
@@ -87,7 +87,7 @@ namespace DrMangle
             bool canFight = false;
             bool head = false;
             bool torso = false;
-            bool limb = false;            
+            bool limb = false;
 
             foreach (var part in Parts)
             {

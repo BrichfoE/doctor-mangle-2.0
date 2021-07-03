@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace doctor_mangle.models.parts
 {
-    public abstract class BodyPart 
+    public abstract class BodyPart
     {
         private Dictionary<Stat, float> _stats = new Dictionary<Stat, float>
             {
@@ -18,7 +18,7 @@ namespace doctor_mangle.models.parts
         {
             get => $"{PartRarity} {PartStructure} {PartType}";
         }
-        
+
         public virtual Part PartType { get; set; }
         public Structure PartStructure { get; set; }
         public Rarity PartRarity { get; set; }
@@ -34,5 +34,5 @@ namespace doctor_mangle.models.parts
         {
             Stats = new float[4];
         }
-    }    
+    }
 }

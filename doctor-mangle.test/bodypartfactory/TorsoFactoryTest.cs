@@ -4,7 +4,7 @@ using doctor_mangle.models.parts;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace doctor_mangle.bodypartfactory
+namespace doctor_mangle.test.bodypartfactory
 {
     [TestFixture]
     public class TorsoFactoryTest
@@ -39,7 +39,7 @@ namespace doctor_mangle.bodypartfactory
             // act
             Part result = _torso.PartType;
 
-            // assert          
+            // assert
             Assert.IsNotNull(result);
             Assert.AreEqual(Part.torso, result);
         }
@@ -53,14 +53,14 @@ namespace doctor_mangle.bodypartfactory
             // act
             bool? result = _torso.IsLeftSide;
 
-            // assert          
+            // assert
             Assert.IsNull(result);
         }
 
         [Test]
         public void GenerateBodyPart_PartDurability_IsNotNull_Equals1()
         {
-            // arrange 
+            // arrange
             Setup();
             decimal expected = 1;
 

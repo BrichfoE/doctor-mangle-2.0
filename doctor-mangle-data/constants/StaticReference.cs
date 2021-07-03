@@ -70,8 +70,8 @@ namespace doctor_mangle.constants
             {Structure.Human, Stat.Technique}
         };
 
-        public static string[] adjectives = new string[10] { "Cool", "Nice", "Mad", "Helpful", "Thin", "Dirty", "Slick", "Ugly", "Super", "Octogenarian" };
-        public static string[] names = new string[10] { "Luke", "Matilda", "Martha", "Hannah", "Pete", "Harry", "Rick", "Veronica", "Susan", "Maynard" };
+        public static string[] adjectives = new string[11] { "Cool", "Nice", "Mad", "Helpful", "Thin", "Dirty", "Slick", "Ugly", "Super", "Octogenarian", "Beefy" };
+        public static string[] names = new string[11] { "Luke", "Matilda", "Martha", "Hannah", "Pete", "Harry", "Rick", "Veronica", "Susan", "Maynard", "Bobby" };
     }
 }
 

@@ -2,7 +2,7 @@
 
 // todo: Probably not the right namespace for this
 namespace doctor_mangle.models.parts
-{     
+{
     public class PartComparer : IComparer<BodyPart>
     {
         public int Compare(BodyPart x, BodyPart y)

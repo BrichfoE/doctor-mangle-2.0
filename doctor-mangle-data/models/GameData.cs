@@ -1,10 +1,12 @@
-﻿using doctor_mangle.services;
+﻿using doctor_mangle.models;
+using doctor_mangle.Service;
+using doctor_mangle.services;
 using doctor_mangle_data.models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
-namespace DrMangle
+namespace doctor_mangle
 {
     public class GameData
     {
@@ -21,6 +23,7 @@ namespace DrMangle
             }
         }
         public PlayerData CurrentPlayer { get; set; }
+        public PlayerService _playerService { get; set; }
         public PlayerData[] AiPlayers { get; set; }
         public List<MonsterGhost> Graveyard { get; set; }
         public int GameDayNumber { get; set; }
@@ -30,6 +33,7 @@ namespace DrMangle
 
         public GameData(string name, int aiCount, int gameID, Random RNG)
         {
+            _playerService = new PlayerService();
             GameDataId = gameID;
 
             GameName = name;
@@ -40,7 +44,7 @@ namespace DrMangle
             var _parkService = new ParkService();
             Parks = _parkService.GenerateParks();
             Parks = _parkService.AddParts(Parks, RNG, AiPlayers.Length + 1);
-            CurrentPlayer = new PlayerData(name, false);
+            CurrentPlayer = _playerService.GeneratePlayer(name, false);
             Graveyard = new List<MonsterGhost>();
 
             CurrentRegion = 0; //at the lab
@@ -51,11 +55,11 @@ namespace DrMangle
         {
             for (int i = 0; i < ai.Length; i++)
             {
-                ai[i] = new PlayerData("rando", true);
+                ai[i] = _playerService.GeneratePlayer("rando", true);
             }
         }
 
-       
+
 
         public void MoveRegions()
         {

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DrMangle
+namespace doctor_mangle
 {
     public class ArenaBattleCalculator
     {
@@ -79,18 +79,18 @@ namespace DrMangle
             if (bm.Parts[0].PartDurability > 0 && bm.Parts[1].PartDurability > 0)
             {
                 winner = blue;
-                blue.Wins = blue.Wins + 1;
+                blue.WinsCount = blue.WinsCount + 1;
                 blue.Monster.Wins = blue.Monster.Wins + 1;
             }
             else
             {
                 winner = green;
-                green.Wins = green.Wins + 1;
+                green.WinsCount = green.WinsCount + 1;
                 green.Monster.Wins = green.Monster.Wins + 1;
             }
-            blue.Fights = blue.Fights + 1;
+            blue.FightsCount = blue.FightsCount + 1;
             blue.Monster.Fights = blue.Monster.Fights + 1;
-            green.Fights = green.Fights + 1;
+            green.FightsCount = green.FightsCount + 1;
             green.Monster.Fights = green.Monster.Fights + 1;
 
             return winner;

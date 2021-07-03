@@ -1,20 +1,56 @@
 ﻿using doctor_mangle.constants;
+using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.parts;
 using doctor_mangle.utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DrMangle.Service
+namespace doctor_mangle.Service
 {
-    public class PlayerManager
+    public class PlayerService : IPlayerService, IComparer<PlayerData>
     {
-
-        public void CheckBag(PlayerData player)
+        private readonly Random _rng;
+        // todo: remove parameterless constructor once we get depdency injection going
+        public PlayerService() { }
+        public PlayerService(Random rng)
         {
+            _rng = rng;
+        }
+        
+        private PartComparer _comparer = new PartComparer();
+        public PartComparer Comparer { get => _comparer; }
+        public PlayerData GeneratePlayer(string playerName, bool isAI)
+        {
+            var _player = new PlayerData();
+            _player.IsAI = isAI;
+
+            if (isAI || string.IsNullOrEmpty(playerName))
+            {
+                _player.Name = this.GenerateRandomName();
+            }
+            else
+            {
+                _player.Name = (string)playerName;
+            }
+
+            return _player;
+        }
+
+        public string GenerateRandomName()
+        {
+            // todo: come back and add a chance to have epithets insetead of adjectives
+
+            int adjInt = (int)(_rng.NextDouble() * (double)(StaticReference.adjectives.Length-1));
+            int namInt = (int)(_rng.NextDouble() * (double)(StaticReference.names.Length-1));
+
+            return StaticReference.adjectives[adjInt] + " " + StaticReference.names[namInt];
+        }
+
+        public string CheckBag(PlayerData player)
+        {
+            string response = string.Empty;
             if (!player.IsAI)
             {
                 int counter = 1;
@@ -22,15 +58,16 @@ namespace DrMangle.Service
                 {
                     if (part != null)
                     {
-                        Console.WriteLine(counter + " - " + part.PartName);
+                        response += counter.ToString() + " - " + part.PartName + "\r\n";
                         counter = counter + 1;
                     }
                 }
             }
             else
             {
-                Console.WriteLine("Hands Off!");
+                response = "Hands off!";
             }
+            return response;
         }
 
         public void ScrapItem(PlayerData player, List<BodyPart> storage, int reference)
@@ -66,7 +103,7 @@ namespace DrMangle.Service
 
             amount = (r.Next(high) * (Int32)(part.PartDurability * 100)) / 100;
 
-            player.ComponentList[Convert.ToInt32(part.PartStructure)] += amount;
+            player.SpareParts[part.PartStructure] += amount;
 
             storage.RemoveAt(reference);
             if (!player.IsAI)
@@ -75,7 +112,7 @@ namespace DrMangle.Service
             }
 
             DumpWorkshopNulls(player);
-            storage.Sort(player.Comparer);
+            storage.Sort(this.Comparer);
         }
 
         public void RepairMonster(PlayerData player, int reference)
@@ -110,11 +147,10 @@ namespace DrMangle.Service
             int cost = ((Int32)((1 - part.PartDurability) * 100) * full) / 100;
             if (cost < 0) cost = 0;
             int intInput = 1;
-            int structureInt = Convert.ToInt32(part.PartStructure);
 
             if (!player.IsAI)
             {
-                Console.WriteLine($"Full repair will cost {cost} {part.PartStructure} parts. You currently have {player.ComponentList[structureInt]}.");
+                Console.WriteLine($"Full repair will cost {cost} {part.PartStructure} parts. You currently have {player.SpareParts[part.PartStructure]}.");
                 Console.WriteLine("Confirm repair?");
                 Console.WriteLine("1 - Yes");
                 Console.WriteLine("2 - No");
@@ -122,30 +158,30 @@ namespace DrMangle.Service
             }
             if (intInput == 1)
             {
-                if (cost <= player.ComponentList[structureInt])
+                if (cost <= (int)player.SpareParts[part.PartStructure])
                 {
-                    player.ComponentList[Convert.ToInt32(part.PartStructure)] -= cost;
+                    player.SpareParts[part.PartStructure] -= cost;
                     part.PartDurability = 1;
                 }
                 else
                 {  //This could be stated in two lines, but this was easier to debug
-                    decimal percentage = ((decimal)player.ComponentList[structureInt] / cost);
+                    decimal percentage = ((decimal)player.SpareParts[part.PartStructure] / cost);
                     decimal remaining = (1 - part.PartDurability);
                     part.PartDurability +=  remaining * percentage;
-                    player.ComponentList[structureInt] = 0;
+                    player.SpareParts[part.PartStructure] = 0;
                 }
 
                 if (!player.IsAI)
                 {
                     Console.WriteLine(part.PartName + " is now at " + part.PartDurability + " durability.");
-                    Console.WriteLine($"You now have {player.ComponentList[structureInt]} {part.PartStructure} parts.");
+                    Console.WriteLine($"You now have {player.SpareParts[part.PartStructure]} {part.PartStructure} parts.");
                 }
             }
         }
 
         public void DumpWorkshopNulls(PlayerData player)
         {
-            player.Workshop = player.Workshop.Where(x => x != null).ToList();
+            player.WorkshopCuppoard = player.WorkshopCuppoard.Where(x => x != null).ToList();
         }
 
         public void DumpBag(PlayerData player)
@@ -154,22 +190,22 @@ namespace DrMangle.Service
             {
                 if (player.Bag[i] != null)
                 {
-                    player.Workshop.Add(player.Bag[i]);
+                    player.WorkshopCuppoard.Add(player.Bag[i]);
                     player.Bag[i] = null;
                 }
-            } 
+            }
 
-            player.Workshop.Sort(player.Comparer);
+            player.WorkshopCuppoard.Sort(this.Comparer);
         }
 
         public void CheckWorkshop(PlayerData player)
         {
             if (!player.IsAI)
             {
-                player.Workshop.Sort(player.Comparer);
+                player.WorkshopCuppoard.Sort(this.Comparer);
                 Console.WriteLine("Workshop Items:");
                 int count = 1;
-                foreach (var part in player.Workshop)
+                foreach (var part in player.WorkshopCuppoard)
                 {
                     if (part != null)
                     {
@@ -180,8 +216,26 @@ namespace DrMangle.Service
             }
         }
 
-        
+        public int Compare(PlayerData x, PlayerData y)
+        {
+            if (x.WinsCount.CompareTo(y.WinsCount) != 0)
+            {
+                return x.WinsCount.CompareTo(y.WinsCount);
+            }
+            else if (x.FightsCount.CompareTo(y.FightsCount) != 0)
+            {
+                return x.FightsCount.CompareTo(y.FightsCount);
+            }
+            else if (x.Name.CompareTo(y.Name) != 0)
+            {
+                return x.Name.CompareTo(y.Name);
+            }
+            else
+            {
+                return 0;
+            }
+        }
 
     }
-    
+
 }

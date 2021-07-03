@@ -6,9 +6,9 @@
         {
             get
             {
-                var side = IsLeftSide != null 
+                var side = IsLeftSide != null
                     ? IsLeftSide.Value
-                        ? "left" 
+                        ? "left"
                         : "right"
                     : "";
                 return $"{PartRarity} {PartStructure} {side} {PartType}";

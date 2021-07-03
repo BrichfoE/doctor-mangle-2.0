@@ -53,7 +53,7 @@ namespace doctor_mangle.services
                         locations[i].PartsList.AddLast(bodyPart);
                     }
                 }
-            }                
+            }
             return locations;
         }
 
@@ -69,6 +69,6 @@ namespace doctor_mangle.services
             }
             return locations;
         }
-        
+
     }
 }
