@@ -261,7 +261,7 @@ namespace doctor_mangle
                         {
                             if (ai.WorkshopCuppoard[i] != null)
                             {
-                                _playerService.ScrapItem(ai, ai.WorkshopCuppoard, i);
+                                _playerService.ScrapItem(ai.SpareParts, ai.WorkshopCuppoard, i);
                             }
                         }
                     }
@@ -391,7 +391,7 @@ namespace doctor_mangle
                         answer = StaticUtility.CheckInput(0, Data.CurrentPlayer.WorkshopCuppoard.Count);
                         if (answer != 0)
                         {
-                            _playerService.ScrapItem(Data.CurrentPlayer, Data.CurrentPlayer.WorkshopCuppoard, answer - 1);
+                            Console.WriteLine(_playerService.ScrapItem(Data.CurrentPlayer.SpareParts, Data.CurrentPlayer.WorkshopCuppoard, answer - 1));
                         }
                         break;
                     case 3:
@@ -411,13 +411,26 @@ namespace doctor_mangle
                             answer = StaticUtility.CheckInput(0, 7);
                             if (answer != 0)
                             {
-                                if (Data.CurrentPlayer.Monster.Parts[answer-1] == null)
+                                var part = Data.CurrentPlayer.Monster.Parts[answer - 1];
+                                if (part == null)
                                 {
                                     Console.WriteLine("Please pick an existing part to repair that part.");
                                 }
                                 else
                                 {
-                                    _playerService.RepairMonster(Data.CurrentPlayer, answer - 1);
+                                    var cost = _playerService.GetRepairCost(part);
+                                    if (!Data.CurrentPlayer.IsAI)
+                                    {
+                                        Console.WriteLine($"Full repair will cost {cost} {part.PartStructure} parts, but partial repair is possible.\r\n You currently have {Data.CurrentPlayer.SpareParts[part.PartStructure]}.");
+                                        Console.WriteLine("Confirm repair?");
+                                        Console.WriteLine("1 - Yes");
+                                        Console.WriteLine("2 - No");
+                                        intInput = StaticUtility.CheckInput(1, 2);
+                                        if (intInput == 1)
+                                        {
+                                            Console.WriteLine(_playerService.OrchestratePartRepair(Data.CurrentPlayer, answer - 1));
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -658,7 +671,7 @@ namespace doctor_mangle
                 }
             }
 
-            _playerService.DumpWorkshopNulls(Data.CurrentPlayer);
+            _playerService.DumpWorkshopNulls(Data.CurrentPlayer.WorkshopCuppoard);
             return currentMonster;
 
         }

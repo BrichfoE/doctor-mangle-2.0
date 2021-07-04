@@ -60,7 +60,15 @@ namespace doctor_mangle.constants
             {Rarity.Common, 5 }
         };
 
-
+        public static Dictionary<Rarity, int> PartsPerRarity = new Dictionary<Rarity, int>()
+        {
+            { Rarity.Unicorn, 1000 },
+            { Rarity.Mythic, 500 },
+            { Rarity.Legendary, 200},
+            { Rarity.Epic, 100 },
+            { Rarity.Rare, 50 },
+            { Rarity.Common, 10 }
+        };
 
         public static Dictionary<Structure, Stat> StructureAffinity = new Dictionary<Structure, Stat>()
         {

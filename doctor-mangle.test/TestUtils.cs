@@ -1,7 +1,5 @@
 ﻿using Moq;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace doctor_mangle.test
 {
@@ -12,6 +10,9 @@ namespace doctor_mangle.test
             var mRandom = new Mock<Random>();
             mRandom.Setup(x => x.Next(
                 It.IsAny<int>(),
+                It.IsAny<int>()))
+                .Returns(expected);
+            mRandom.Setup(x => x.Next(
                 It.IsAny<int>()))
                 .Returns(expected);
             return mRandom;
