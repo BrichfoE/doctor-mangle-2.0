@@ -32,6 +32,7 @@ namespace doctor_mangle
         [JsonConstructor]
         public GameData() { }
 
+        // todo: seems like a prime target for either an abstract factory or builder pattern
         public GameData(string name, int aiCount, int gameID, Random RNG)
         {
             _playerService = new PlayerService();
@@ -60,28 +61,22 @@ namespace doctor_mangle
             }
         }
 
-
-
-        public void MoveRegions()
+        // todo: this should actually probably move to the GameService once it's refactored
+        public string PrintRegionOptions()
         {
-            int intInput;
-            Console.WriteLine("You are currently in the " + RegionText + ",");
-
-            Console.WriteLine("what will you do next?");
+            string result = string.Empty;
             for (int i = 1; i < 5; i++)
             {
                 if (CurrentRegion == i)
                 {
-                    Console.WriteLine(i + " - Stay in the " + Parks[i].ParkName);
+                    result += $"{i} - Stay in the {Parks[i].ParkName} \r\n";
                 }
                 else
                 {
-                    Console.WriteLine(i + " - Go to the " + Parks[i].ParkName);
+                    result += $"{i} - Go to the {Parks[i].ParkName} \r\n";
                 }
             }
-
-            // intInput = StaticUtility.CheckInput(1, 4);
-            // CurrentRegion = intInput;
+            return result;
         }
 
     }

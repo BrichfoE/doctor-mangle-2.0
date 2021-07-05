@@ -88,7 +88,10 @@ namespace doctor_mangle
                 try
                 {
                     StaticUtility.TalkPause("It is currently " + i + " o'clock. The parks close at 6.");
-                    Data.MoveRegions();
+                    Console.WriteLine($"You are currently in the {Data.RegionText}, \r\n what will you do next?");
+                    Console.WriteLine(Data.PrintRegionOptions());
+                    intInput = StaticUtility.CheckInput(1, 4);
+                    Data.CurrentRegion = intInput;
                     gameStatus = ShowSearchOptions(i - 1);
                     AISearchTurn(Data, i);
                     if (!gameStatus)
@@ -328,7 +331,10 @@ namespace doctor_mangle
                         Console.WriteLine(_playerService.CheckBag(Data.CurrentPlayer));
                         break;
                     case 4:
-                        Data.MoveRegions();
+                        Console.WriteLine($"You are currently in the {Data.RegionText}, \r\n what will you do next?");
+                        Console.WriteLine(Data.PrintRegionOptions());
+                        intInput = StaticUtility.CheckInput(1, 4);
+                        Data.CurrentRegion = intInput;
                         break;
                     default:
                         throw new Exception("Bad Input in GameController.ShowSearchOptions");
