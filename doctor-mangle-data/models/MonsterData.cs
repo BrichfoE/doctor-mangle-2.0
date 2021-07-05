@@ -57,6 +57,7 @@ namespace doctor_mangle
         public MonsterData()
         {
             _monsterStats = new float[4];
+            Parts = new BodyPart[6];
         }
 
         public MonsterData(string newName, BodyPart[] newParts)

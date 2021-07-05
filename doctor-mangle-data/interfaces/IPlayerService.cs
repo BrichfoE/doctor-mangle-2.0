@@ -14,5 +14,8 @@ namespace doctor_mangle.interfaces
         int GetRepairCost(BodyPart part);
         int RepairPart(BodyPart part, int availableParts);
         string OrchestratePartRepair(PlayerData player, int reference);
+        void DumpBagIntoWorkshop(PlayerData player);
+        string GetWorkshopItemList(PlayerData player);
+        int Compare(PlayerData x, PlayerData y);
     }
 }

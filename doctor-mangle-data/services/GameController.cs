@@ -110,7 +110,7 @@ namespace doctor_mangle
                 Data.CurrentRegion = 0;
                 foreach (var player in AllPlayers)
                 {
-                    _playerService.DumpBag(player);
+                    _playerService.DumpBagIntoWorkshop(player);
                 }
                 Console.WriteLine("Bag contents added to workshop inventory.");
                 gameStatus = ShowLabOptions();
@@ -387,7 +387,7 @@ namespace doctor_mangle
                     case 2:
                         Console.WriteLine("Which Item would you like to scrap?");
                         Console.WriteLine("0 - Exit");
-                        _playerService.CheckWorkshop(Data.CurrentPlayer);
+                        Console.WriteLine(_playerService.GetWorkshopItemList(Data.CurrentPlayer));
                         answer = StaticUtility.CheckInput(0, Data.CurrentPlayer.WorkshopCuppoard.Count);
                         if (answer != 0)
                         {
@@ -671,7 +671,7 @@ namespace doctor_mangle
                 }
             }
 
-            _playerService.DumpWorkshopNulls(Data.CurrentPlayer.WorkshopCuppoard);
+            Data.CurrentPlayer.WorkshopCuppoard = Data.CurrentPlayer.WorkshopCuppoard.Where(x => x != null).ToList();
             return currentMonster;
 
         }

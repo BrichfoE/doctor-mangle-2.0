@@ -257,5 +257,209 @@ namespace doctor_mangle.test.services
             Assert.AreEqual(expected, result);
             Assert.AreEqual(dura, prt.PartDurability);
         }
+
+        [Test]
+        [TestCase(Structure.Animal)]
+        [TestCase(Structure.Mechanical)]
+        [TestCase(Structure.Magical)]
+        [TestCase(Structure.Rock)]
+        [TestCase(Structure.Human)]
+        public void OrchestratePartRepair_UpdatesCount(Structure structureType)
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var player = new PlayerData() { Monster = new MonsterData() };
+            player.SpareParts[structureType] = 10;
+            player.Monster.Parts[0] = new Head() { 
+                PartRarity = Rarity.Common, 
+                PartStructure = structureType, 
+                PartDurability = 0 
+            };
+            var expected = $"Common {structureType} head is now at 1 durability.\r\nYou now have 0 {structureType} parts.";
+
+            // act
+            var result = _playerService.OrchestratePartRepair(player, 0);
+
+            // assert
+            Assert.AreEqual(0, player.SpareParts[structureType]);
+            Assert.AreEqual(1, player.Monster.Parts[0].PartDurability);
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        [TestCase(5, 0)]
+        [TestCase(5, 5)]
+        [TestCase(0, 5)]
+        [TestCase(3, 3)]
+        [TestCase(1, 9)]
+        public void DumpBagIntoWorkshop_ReturnsCorrectCount(int bagStart, int workshopStart)
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var player = new PlayerData();
+            for (int i = 0; i < workshopStart; i++)
+            {
+                player.WorkshopCuppoard.Add(new Head());
+            }
+            for (int i = 0; i < bagStart; i++)
+            {
+                player.Bag[i] =new Head();
+            }
+            var expected = bagStart + workshopStart;
+
+            // act
+            _playerService.DumpBagIntoWorkshop(player);
+            var bagCount = 0;
+            foreach (var item in player.Bag)
+            {
+                if(item != null) bagCount++;
+            }
+
+            // assert
+            Assert.AreEqual(expected, player.WorkshopCuppoard.Count);
+            Assert.AreEqual(0, bagCount);
+        }
+
+        [Test]
+        [TestCase(1)]
+        [TestCase(3)]
+        [TestCase(25)]
+        [TestCase(0)]
+        public void GetCheckWorkshopItemList_ReturnsCorrectString(int workshopCount)
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var player = new PlayerData();
+            var expected = "Workshop Items:\r\n";
+            for (int i = 0; i < workshopCount; i++)
+            {
+                expected += $"{i+1} - Common Animal head\r\n";
+                player.WorkshopCuppoard.Add(new Head()
+                {
+                    PartRarity = Rarity.Common,
+                    PartStructure = Structure.Animal
+                });
+            }
+            if (workshopCount == 0)
+            {
+                expected += "Workshop cuppboard is empty\r\n";
+            }
+
+            // act
+            var result = _playerService.GetWorkshopItemList(player);
+
+            // assert
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void Compare_ByWins()
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var winner = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount = 1,
+                Name = "Bertram"
+            };
+            var loser = new PlayerData()
+            {
+                WinsCount = 1,
+                FightsCount = 2,
+                Name = "Aardvark"
+            };
+
+            // act
+            var result1 = _playerService.Compare(winner, loser);
+            var result2 = _playerService.Compare(loser, winner);
+
+            // assert
+            Assert.AreEqual(1, result1);
+            Assert.AreEqual(-1, result2);
+        }
+
+        [Test]
+        public void Compare_ByFights()
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var winner = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount = 1,
+                Name = "Bertram"
+            };
+            var loser = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount = 2,
+                Name = "Aardvark"
+            };
+
+            // act
+            var result1 = _playerService.Compare(winner, loser);
+            var result2 = _playerService.Compare(loser, winner);
+
+            // assert
+            Assert.AreEqual(1, result1);
+            Assert.AreEqual(-1, result2);
+        }
+
+        [Test]
+        public void Compare_ByName()
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var winner = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount =2,
+                Name = "Aardvark"
+            };
+            var loser = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount = 2,
+                Name = "Bertram"
+            };
+
+            // act
+            var result1 = _playerService.Compare(winner, loser);
+            var result2 = _playerService.Compare(loser, winner);
+
+            // assert
+            Assert.AreEqual(1, result1);
+            Assert.AreEqual(-1, result2);
+        }
+
+        [Test]
+        public void Compare_AreEqual()
+        {
+            // arrange
+            _playerService = new PlayerService();
+            var winner = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount = 2,
+                Name = "Aardvark"
+            };
+            var loser = new PlayerData()
+            {
+                WinsCount = 2,
+                FightsCount = 2,
+                Name = "Aardvark"
+            };
+
+            // act
+
+            // act
+            var result1 = _playerService.Compare(winner, loser);
+            var result2 = _playerService.Compare(loser, winner);
+
+            // assert
+            Assert.AreEqual(0, result1);
+            Assert.AreEqual(0, result2);
+        }
     }
 }

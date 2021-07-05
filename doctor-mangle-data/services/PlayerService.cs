@@ -2,10 +2,8 @@
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.parts;
-using doctor_mangle.utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace doctor_mangle.Service
 {
@@ -127,12 +125,7 @@ namespace doctor_mangle.Service
             return $"{part.PartName} is now at {part.PartDurability} durability.\r\nYou now have {player.SpareParts[part.PartStructure]} {part.PartStructure} parts.";
         }
 
-        public void DumpWorkshopNulls(List<BodyPart> workshopCuppoard)
-        {
-            workshopCuppoard = workshopCuppoard.Where(x => x != null).ToList();
-        }
-
-        public void DumpBag(PlayerData player)
+        public void DumpBagIntoWorkshop(PlayerData player)
         {
             for (int i = 0; i < player.Bag.Length; i++)
             {
@@ -142,48 +135,43 @@ namespace doctor_mangle.Service
                     player.Bag[i] = null;
                 }
             }
-
             player.WorkshopCuppoard.Sort(this.Comparer);
         }
 
-        public void CheckWorkshop(PlayerData player)
+        public string GetWorkshopItemList(PlayerData player)
         {
-            if (!player.IsAI)
+            string result = "Workshop Items:\r\n";
+            int count = 1;
+            foreach (var part in player.WorkshopCuppoard)
             {
-                player.WorkshopCuppoard.Sort(this.Comparer);
-                Console.WriteLine("Workshop Items:");
-                int count = 1;
-                foreach (var part in player.WorkshopCuppoard)
+                if (part != null)
                 {
-                    if (part != null)
-                    {
-                        Console.WriteLine(count + " - " + part.PartName);
-                        count += 1;
-                    }
+                    result += $"{count} - {part.PartName}\r\n";
+                    count += 1;
                 }
             }
+            if (count == 1)
+            {
+                result += "Workshop cuppboard is empty\r\n";
+            }
+            return result;
         }
 
         public int Compare(PlayerData x, PlayerData y)
         {
-            if (x.WinsCount.CompareTo(y.WinsCount) != 0)
-            {
-                return x.WinsCount.CompareTo(y.WinsCount);
-            }
-            else if (x.FightsCount.CompareTo(y.FightsCount) != 0)
-            {
-                return x.FightsCount.CompareTo(y.FightsCount);
-            }
-            else if (x.Name.CompareTo(y.Name) != 0)
-            {
-                return x.Name.CompareTo(y.Name);
-            }
-            else
-            {
-                return 0;
-            }
+            // more wins equals earlier in order
+            var result = x.WinsCount.CompareTo(y.WinsCount);
+            if (result != 0) return result;
+
+            // fewer fights equals earlier in order (because higher win percentage)
+            result = y.FightsCount.CompareTo(x.FightsCount);
+            if (result != 0) return result;
+
+            // earlier in alphabet equals earlier in order
+            result = y.Name.CompareTo(x.Name);
+            if (result != 0) return result;
+
+            return 0;
         }
-
     }
-
 }
