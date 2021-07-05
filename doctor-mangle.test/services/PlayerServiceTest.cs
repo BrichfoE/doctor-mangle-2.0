@@ -1,12 +1,12 @@
 ﻿using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
+using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using doctor_mangle.Service;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace doctor_mangle.test.services
 {
@@ -228,8 +228,8 @@ namespace doctor_mangle.test.services
         {
             // arrange
             _playerService = new PlayerService();
-            var prt = new Head() 
-            { 
+            var prt = new Head()
+            {
                 PartDurability = durability,
                 PartRarity = rare
             };
@@ -270,10 +270,10 @@ namespace doctor_mangle.test.services
             _playerService = new PlayerService();
             var player = new PlayerData() { Monster = new MonsterData() };
             player.SpareParts[structureType] = 10;
-            player.Monster.Parts[0] = new Head() { 
-                PartRarity = Rarity.Common, 
-                PartStructure = structureType, 
-                PartDurability = 0 
+            player.Monster.Parts[0] = new Head() {
+                PartRarity = Rarity.Common,
+                PartStructure = structureType,
+                PartDurability = 0
             };
             var expected = $"Common {structureType} head is now at 1 durability.\r\nYou now have 0 {structureType} parts.";
 

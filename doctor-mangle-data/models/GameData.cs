@@ -1,4 +1,5 @@
 ﻿using doctor_mangle.models;
+using doctor_mangle.models.monsters;
 using doctor_mangle.Service;
 using doctor_mangle.services;
 using doctor_mangle_data.models;

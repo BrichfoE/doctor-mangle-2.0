@@ -1,6 +1,7 @@
 ﻿using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
+using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using doctor_mangle.Service;
 using doctor_mangle.services;
@@ -212,7 +213,7 @@ namespace doctor_mangle
                     if (betterBody)
                     {
                         data.Graveyard.Add(new MonsterGhost(ai.Monster, data.GameDayNumber));
-                        for (int i = 2; i < ai.Monster.Parts.Length; i++)
+                        for (int i = 2; i < ai.Monster.Parts.Count; i++)
                         {
                             if(ai.Monster.Parts[i] != null) ai.WorkshopCuppoard.Add(ai.Monster.Parts[i]);
                         }
@@ -487,7 +488,7 @@ namespace doctor_mangle
                     Console.WriteLine("You gently dismember " + currentMonster.Name + " and bury its head and torso in the communal graveyard.");
                     Console.WriteLine(currentMonster.Name + " will be missed.");
                     Console.WriteLine("Limbs have been added to your workshop inventory");
-                    for (int i = 2; i < currentMonster.Parts.Length; i++)
+                    for (int i = 2; i < currentMonster.Parts.Count; i++)
                     {
                         if (currentMonster.Parts[i] != null)
                         {
@@ -661,7 +662,10 @@ namespace doctor_mangle
                     }
                     else
                     {
-                        currentMonster.Parts = table;
+                        foreach (var part in table)
+                        {
+                            currentMonster.Parts.Add(part);
+                        }
                     }
                     Data.CurrentPlayer.WorkshopCuppoard = workshopCopy.Select(x => x).ToList();
                 }

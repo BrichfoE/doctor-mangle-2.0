@@ -1,4 +1,5 @@
 ﻿using doctor_mangle.constants;
+using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using System.Collections.Generic;
 
