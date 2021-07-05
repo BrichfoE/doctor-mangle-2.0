@@ -60,7 +60,15 @@ namespace doctor_mangle.constants
             {Rarity.Common, 5 }
         };
 
-
+        public static Dictionary<Rarity, int> PartsPerRarity = new Dictionary<Rarity, int>()
+        {
+            { Rarity.Unicorn, 1000 },
+            { Rarity.Mythic, 500 },
+            { Rarity.Legendary, 200},
+            { Rarity.Epic, 100 },
+            { Rarity.Rare, 50 },
+            { Rarity.Common, 10 }
+        };
 
         public static Dictionary<Structure, Stat> StructureAffinity = new Dictionary<Structure, Stat>()
         {
@@ -70,8 +78,8 @@ namespace doctor_mangle.constants
             {Structure.Human, Stat.Technique}
         };
 
-        public static string[] adjectives = new string[10] { "Cool", "Nice", "Mad", "Helpful", "Thin", "Dirty", "Slick", "Ugly", "Super", "Octogenarian" };
-        public static string[] names = new string[10] { "Luke", "Matilda", "Martha", "Hannah", "Pete", "Harry", "Rick", "Veronica", "Susan", "Maynard" };
+        public static string[] adjectives = new string[11] { "Cool", "Nice", "Mad", "Helpful", "Thin", "Dirty", "Slick", "Ugly", "Super", "Octogenarian", "Beefy" };
+        public static string[] names = new string[11] { "Luke", "Matilda", "Martha", "Hannah", "Pete", "Harry", "Rick", "Veronica", "Susan", "Maynard", "Bobby" };
     }
 }
 

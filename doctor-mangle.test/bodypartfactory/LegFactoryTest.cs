@@ -4,18 +4,18 @@ using doctor_mangle.models.parts;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace doctor_mangle.bodypart
+namespace doctor_mangle.test.bodypartfactory
 {
     [TestFixture]
-    public class ArmFactoryTest
+    public class LegFactoryTest
     {
-        private PairedBodyPart _arm;
-        private ArmFactory _armFactory;
+        private BodyPart _leg;
+        private LegFactory _legFactory;
 
         private void Setup(Structure? structure)
         {
-            _armFactory = new ArmFactory(structure);
-            _arm = _armFactory.BodyPart;
+            _legFactory = new LegFactory(structure);
+            _leg = _legFactory.BodyPart;
         }
 
         private void Setup()
@@ -26,8 +26,8 @@ namespace doctor_mangle.bodypart
         [TearDown]
         public void CleanUp()
         {
-            _armFactory = null;
-            _arm = null;
+            _legFactory = null;
+            _leg = null;
         }
 
         [Test]
@@ -37,11 +37,11 @@ namespace doctor_mangle.bodypart
             Setup();
 
             // act
-            Part result = _arm.PartType;
+            Part result = _leg.PartType;
 
-            // assert          
+            // assert
             Assert.IsNotNull(result);
-            Assert.AreEqual(Part.arm, result);
+            Assert.AreEqual(Part.leg, result);
         }
 
         [Test]
@@ -52,27 +52,27 @@ namespace doctor_mangle.bodypart
             Setup();
 
             // act
-            bool isLeft = _arm.IsLeftSide;
+            bool isLeft = _leg.IsLeftSide.Value;
             var expected = isLeft
-                ? "left arm"
-                : "right arm";
-            string name = _arm.PartName;
+                ? "left leg"
+                : "right leg";
+            string name = _leg.PartName;
             var result = name.Substring(name.Length - expected.Length, expected.Length);
 
-            // assert          
+            // assert
             Assert.IsNotNull(isLeft);
-            Assert.AreEqual(expected, result);            
+            Assert.AreEqual(expected, result);
         }
-        
+
         [Test]
         public void GenerateBodyPart_PartDurability_IsNotNull_Equals1()
         {
-            // arrange
+            // arrange - in initalize
             Setup();
             decimal expected = 1;
 
             // act
-            decimal result = _arm.PartDurability;
+            decimal result = _leg.PartDurability;
 
             // assert
             Assert.IsNotNull(result);
@@ -86,19 +86,19 @@ namespace doctor_mangle.bodypart
         [TestCase(Structure.Mechanical)]
         [TestCase(Structure.Rock)]
         [TestCase(null)]
-        public void GenerateBodyPart_PartStructure_IsNotNull_EqualsExpected(Structure? structure)
+        public void GenerateBodyPart_PartStructure_IsNotNull_EqualsExpected(Structure? expected)
         {
-            // arrange - in initalize
-            Setup(structure);
+            // arrange
+            Setup(expected);
 
             // act
-            Structure result = _arm.PartStructure;
+            Structure result = _leg.PartStructure;
 
             // assert
             Assert.IsNotNull(result);
-            if (structure != null)
+            if (expected != null)
             {
-                Assert.AreEqual(structure, result);
+                Assert.AreEqual(expected, result);
             }
         }
 
@@ -106,11 +106,11 @@ namespace doctor_mangle.bodypart
         [Repeat(5)]
         public void GenerateBodyPart_PartRarity_IsNotNull_BodyPart()
         {
-            // arrange - in initalize
+            // arrange
+            Setup();
 
             // act
-            Setup();
-            Rarity result = _arm.PartRarity;
+            Rarity result = _leg.PartRarity;
 
             // assert
             Assert.IsNotNull(result);
@@ -127,25 +127,24 @@ namespace doctor_mangle.bodypart
         [Repeat(25)]
         public void SetStats_PartRarity_IsNotNull_BodyPart(Structure structure)
         {
-            // arrange
+            // arrange - adjust base stats as we're testing the random range here
             Setup(structure);
-
-            var rarityMult = StaticReference.RarityMultiplier[_arm.PartRarity];
+            var rarityMult = StaticReference.RarityMultiplier[_leg.PartRarity];
 
             // act
-            Dictionary<Stat, float> result = _arm.PartStats;
+            Dictionary<Stat, float> result = _leg.PartStats;
 
             // assert
             Assert.IsNotNull(result);
             Assert.AreEqual(4, result.Count);
 
-            Assert.GreaterOrEqual(result[Stat.Alacrity]/rarityMult, 3f, "Alacrity");
-            Assert.GreaterOrEqual(result[Stat.Strength]/rarityMult, 15f, "Strength");
+            Assert.GreaterOrEqual(result[Stat.Alacrity]/rarityMult, 15f, "Alacrity");
+            Assert.GreaterOrEqual(result[Stat.Strength]/rarityMult, 2.75f, "Strength");
             Assert.GreaterOrEqual(result[Stat.Endurance]/rarityMult, .36f, "Endurance");
             Assert.GreaterOrEqual(result[Stat.Technique]/rarityMult, .22f, "Technique");
 
-            Assert.LessOrEqual(result[Stat.Alacrity]/rarityMult, 22f, "Alacrity");
-            Assert.LessOrEqual(result[Stat.Strength]/rarityMult, 50f, "Strength");
+            Assert.LessOrEqual(result[Stat.Alacrity]/rarityMult, 50f, "Alacrity");
+            Assert.LessOrEqual(result[Stat.Strength]/rarityMult, 21f, "Strength");
             Assert.LessOrEqual(result[Stat.Endurance]/rarityMult, 10.5f, "Endurance");
             Assert.LessOrEqual(result[Stat.Technique]/rarityMult, 4.2f, "Technique");
         }

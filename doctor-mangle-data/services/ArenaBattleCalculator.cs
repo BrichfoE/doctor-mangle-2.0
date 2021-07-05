@@ -1,4 +1,5 @@
 ﻿using doctor_mangle.models;
+using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DrMangle
+namespace doctor_mangle
 {
     public class ArenaBattleCalculator
     {
@@ -39,18 +40,18 @@ namespace DrMangle
                     reply = gm;
                 }
 
-                float strike = (RNG.Next(1, 101) * attack.MonsterStats[1]) / 100000;
-                float parry = (RNG.Next(1, 101)  * reply.MonsterStats[2]) / 100000;
-                float repost = (RNG.Next(1, 101) * reply.MonsterStats[1]) / 100000;
-                float block = (RNG.Next(1, 101)  * attack.MonsterStats[2]) / 100000;
+                float strike = (RNG.Next(1, 101) * attack.MonsterStats[constants.Stat.Strength]) / 100000;
+                float parry = (RNG.Next(1, 101)  * reply.MonsterStats[constants.Stat.Alacrity]) / 100000;
+                float repost = (RNG.Next(1, 101) * reply.MonsterStats[constants.Stat.Alacrity]) / 100000;
+                float block = (RNG.Next(1, 101)  * attack.MonsterStats[constants.Stat.Strength]) / 100000;
                 BodyPart attackTarget;
                 BodyPart replyTarget;
 
                 //add technical to strike to hit head or torso
-                attackTarget = GetTarget(reply, attack, (RNG.Next(1, 101)) < (attack.MonsterStats[3] / 10000));
+                attackTarget = GetTarget(reply, attack, (RNG.Next(1, 101)) < (attack.MonsterStats[constants.Stat.Technique] / 10000));
 
                 //add technical to repost to hit head or torso
-                replyTarget = GetTarget(attack, reply, (RNG.Next(1, 101)) < (reply.MonsterStats[3] / 10000));
+                replyTarget = GetTarget(attack, reply, (RNG.Next(1, 101)) < (reply.MonsterStats[constants.Stat.Technique] / 10000));
 
                 //strike vs parry, result decreases random part damage
                 Console.WriteLine(attack.Name + " swings at " + reply.Name + "'s " + attackTarget.PartName + "!");
@@ -79,18 +80,18 @@ namespace DrMangle
             if (bm.Parts[0].PartDurability > 0 && bm.Parts[1].PartDurability > 0)
             {
                 winner = blue;
-                blue.Wins = blue.Wins + 1;
+                blue.WinsCount = blue.WinsCount + 1;
                 blue.Monster.Wins = blue.Monster.Wins + 1;
             }
             else
             {
                 winner = green;
-                green.Wins = green.Wins + 1;
+                green.WinsCount = green.WinsCount + 1;
                 green.Monster.Wins = green.Monster.Wins + 1;
             }
-            blue.Fights = blue.Fights + 1;
+            blue.FightsCount = blue.FightsCount + 1;
             blue.Monster.Fights = blue.Monster.Fights + 1;
-            green.Fights = green.Fights + 1;
+            green.FightsCount = green.FightsCount + 1;
             green.Monster.Fights = green.Monster.Fights + 1;
 
             return winner;
@@ -115,9 +116,9 @@ namespace DrMangle
                 }
                 else
                 {
-                    for (int i = 0; i < targetMonster.Parts.Length; i++)
+                    for (int i = 0; i < targetMonster.Parts.Count; i++)
                     {
-                        if (targetMonster.Parts[i] != null && (RNG.Next(i, targetMonster.Parts.Length-1)) == i && targetMonster.Parts[i].PartDurability > 0)
+                        if (targetMonster.Parts[i] != null && (RNG.Next(i, targetMonster.Parts.Count-1)) == i && targetMonster.Parts[i].PartDurability > 0)
                         {
                             target = targetMonster.Parts[i];
                             break;

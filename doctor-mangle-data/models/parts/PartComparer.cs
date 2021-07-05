@@ -2,7 +2,7 @@
 
 // todo: Probably not the right namespace for this
 namespace doctor_mangle.models.parts
-{     
+{
     public class PartComparer : IComparer<BodyPart>
     {
         public int Compare(BodyPart x, BodyPart y)
@@ -27,11 +27,9 @@ namespace doctor_mangle.models.parts
             {
                 return x.PartRarity.CompareTo(y.PartRarity);
             }
-            else if (x.GetType() == typeof(PairedBodyPart) && y.GetType() == typeof(PairedBodyPart))
+            else if (x.IsLeftSide != null && y.IsLeftSide != null)
             {
-                var x1 = (PairedBodyPart)x;
-                var y1 = (PairedBodyPart)y;
-                return x1.IsLeftSide.CompareTo(y1.IsLeftSide);
+                return x.IsLeftSide.Value.CompareTo(y.IsLeftSide.Value);
             }
             else
             {

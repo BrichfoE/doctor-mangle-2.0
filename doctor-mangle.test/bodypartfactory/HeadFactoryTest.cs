@@ -4,7 +4,7 @@ using doctor_mangle.models.parts;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace doctor_mangle.bodypart
+namespace doctor_mangle.test.bodypartfactory
 {
     [TestFixture]
     public class HeadFactoryTest
@@ -21,7 +21,14 @@ namespace doctor_mangle.bodypart
         private void Setup()
         {
             Setup(null);
-        }        
+        }
+
+
+
+
+
+
+
 
         [TearDown]
         public void CleanUp()
@@ -29,7 +36,7 @@ namespace doctor_mangle.bodypart
             _headFactory = null;
             _head = null;
         }
-        
+
         [Test]
         public void HeadFactory_PartType_IsCorrectType()
         {
@@ -39,9 +46,36 @@ namespace doctor_mangle.bodypart
             // act
             Part result = _head.PartType;
 
-            // assert          
+            // assert
+
+
+
+
+
+
+
             Assert.IsNotNull(result);
             Assert.AreEqual(Part.head, result);
+        }
+
+        [Test]
+        public void HeadFactory_IsLeftSide_IsNull()
+        {
+            // arrange
+            Setup();
+
+            // act
+            bool? result = _head.IsLeftSide;
+
+            // assert
+
+
+
+
+
+
+
+            Assert.IsNull(result);
         }
 
         [Test]
