@@ -241,10 +241,10 @@ namespace doctor_mangle
                         {
                             if (oldP != null && newP.PartType == (Part)i)
                             {
-                                score += newP.Stats[0] - monst[i].Stats[0];
-                                score += newP.Stats[1] - monst[i].Stats[1];
-                                score += newP.Stats[2] - monst[i].Stats[2];
-                                score += newP.Stats[3] - monst[i].Stats[3];
+                                score += newP.PartStats[Stat.Alacrity] - monst[i].PartStats[Stat.Alacrity];
+                                score += newP.PartStats[Stat.Strength] - monst[i].PartStats[Stat.Strength];
+                                score += newP.PartStats[Stat.Endurance] - monst[i].PartStats[Stat.Endurance];
+                                score += newP.PartStats[Stat.Technique] - monst[i].PartStats[Stat.Technique];
                             }
                             if ((oldP == null || score > 0f) && newP.PartType == (Part)i)
                             {
@@ -553,10 +553,10 @@ namespace doctor_mangle
                         StaticUtility.TalkPause("Currently " + currentMonster.Name + " has the below " + type);
                         Console.WriteLine(currentMonster.Parts[i].PartName);
                         Console.WriteLine("Durability: " + currentMonster.Parts[i].PartDurability);
-                        Console.WriteLine("Alacrity: " + currentMonster.Parts[i].Stats[0]);
-                        Console.WriteLine("Strenght: " + currentMonster.Parts[i].Stats[1]);
-                        Console.WriteLine("Endurance: " + currentMonster.Parts[i].Stats[2]);
-                        StaticUtility.TalkPause("Technique: " + currentMonster.Parts[i].Stats[3]);
+                        Console.WriteLine("Alacrity: " + currentMonster.Parts[i].PartStats[Stat.Alacrity]);
+                        Console.WriteLine("Strenght: " + currentMonster.Parts[i].PartStats[Stat.Strength]);
+                        Console.WriteLine("Endurance: " + currentMonster.Parts[i].PartStats[Stat.Endurance]);
+                        StaticUtility.TalkPause("Technique: " + currentMonster.Parts[i].PartStats[Stat.Technique]);
                     }
 
                     Console.WriteLine("Workshop Items:");
@@ -587,10 +587,10 @@ namespace doctor_mangle
                     else
                     {
                         Console.WriteLine("Durability: " + chosenPart.PartDurability);
-                        Console.WriteLine("Alacrity: " + chosenPart.Stats[0]);
-                        Console.WriteLine("Strenght: " + chosenPart.Stats[1]);
-                        Console.WriteLine("Endurance: " + chosenPart.Stats[2]);
-                        StaticUtility.TalkPause("Technique: " + chosenPart.Stats[3]);
+                        Console.WriteLine("Alacrity: " + chosenPart.PartStats[Stat.Alacrity]);
+                        Console.WriteLine("Strenght: " + chosenPart.PartStats[Stat.Strength]);
+                        Console.WriteLine("Endurance: " + chosenPart.PartStats[Stat.Endurance]);
+                        StaticUtility.TalkPause("Technique: " + chosenPart.PartStats[Stat.Technique]);
                         Console.WriteLine("Use this part?");
                         Console.WriteLine("1 - Yes");
                         Console.WriteLine("2 - No");

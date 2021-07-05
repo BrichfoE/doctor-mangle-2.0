@@ -24,15 +24,9 @@ namespace doctor_mangle.models.parts
         public Rarity PartRarity { get; set; }
         public bool? IsLeftSide { get; set; }
         public Dictionary<Stat, float> PartStats { get => _stats; }
-
-        public float[] Stats { get; set; }
-
         public decimal PartDurability { get; set; }
 
         [JsonConstructor]
-        public BodyPart() //empty constructor
-        {
-            Stats = new float[4];
-        }
+        public BodyPart() { }
     }
 }

@@ -9,6 +9,7 @@ namespace doctor_mangle.models.monsters
         [JsonConstructor]
         public MonsterGhost() { }
 
+        // todo: move this to MonsterService when it exists
         public MonsterGhost(MonsterData deceased, int day)
         {
             Name = deceased.Name;
