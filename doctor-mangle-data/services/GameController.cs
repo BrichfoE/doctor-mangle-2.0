@@ -34,32 +34,32 @@ namespace doctor_mangle
             _parkService = new ParkService();
 
             Repo.FileSetup();
-            //StaticUtility.TalkPause("Welcome to the Isle of Dr. Mangle.");
-            //if (Repo.gameIndex.Count > 1)
-            //{
-            //    Data = Repo.LoadGame();
-            //}
-            //if (Data == null)
-            //{
-            //    bool halt = true;
-            //    while (halt)
-            //    {
-            //        Console.WriteLine("Please enter a name for your game data:");
-            //        textInput = Console.ReadLine();
-            //        if(Repo.gameIndex.ContainsKey(textInput))
-            //        {
-            //            Console.WriteLine("A game by that name already exists.");
-            //        }
-            //        else
-            //        {
-            //            halt = false;
-            //        }
-            //    }
-            //    Console.WriteLine("And how many contestants will you be competing against?");
-            //    intInput = StaticUtility.CheckInput(1, 7);
+            StaticUtility.TalkPause("Welcome to the Isle of Dr. Mangle.");
+            if (Repo.gameIndex.Count > 1)
+            {
+                Data = Repo.LoadGame();
+            }
+            if (Data == null)
+            {
+                bool halt = true;
+                while (halt)
+                {
+                    Console.WriteLine("Please enter a name for your game data:");
+                    textInput = Console.ReadLine();
+                    if (Repo.gameIndex.ContainsKey(textInput))
+                    {
+                        Console.WriteLine("A game by that name already exists.");
+                    }
+                    else
+                    {
+                        halt = false;
+                    }
+                }
+                Console.WriteLine("And how many contestants will you be competing against?");
+                intInput = StaticUtility.CheckInput(1, 7);
                 Data = new GameData(textInput, intInput, Repo.GetNextGameID(), RNG);
-            //    Repo.SaveGame(Data);
-            //}
+                Repo.SaveGame(Data);
+            }
             AllPlayers = new PlayerData[Data.AiPlayers.Length + 1];
             AllPlayers[0] = Data.CurrentPlayer;
             for (int i = 0; i < Data.AiPlayers.Length; i++)
@@ -511,7 +511,7 @@ namespace doctor_mangle
 
             workshopCopy = Data.CurrentPlayer.WorkshopCuppoard.Select(x => x).ToList();
 
-            for (int i = loopStart; i < 6; i++)
+            for (int i = loopStart; i < 5; i++)
             {
                 switch (i)
                 {
@@ -542,7 +542,7 @@ namespace doctor_mangle
                 if (!workshopCopy.Any(x => x.PartType == (Part)i))
                 {
                     Console.WriteLine("You do not have a " + type + " in your workshop.");
-                    if (i == 0 || i == 1)
+                    if (i == 1 || i == 2)
                     {
                         Console.WriteLine("A monster without a " + type + " is no moster at all, better luck tomorrow...");
                         table[0] = null; //this is in case they have a head but no torso

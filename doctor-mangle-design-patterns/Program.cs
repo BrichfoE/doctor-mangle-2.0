@@ -1,4 +1,5 @@
-﻿using doctor_mangle_data.controllers;
+﻿using doctor_mangle;
+using doctor_mangle_data.controllers;
 using System;
 
 namespace doctor_mangle_design_patterns
@@ -7,13 +8,23 @@ namespace doctor_mangle_design_patterns
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-            var PC = ProgramControl.GetProgramControl();
-            if (PC != null)
+            GameController gc = new GameController();
+            bool activeGame = true;
+
+            while (activeGame)
             {
-                Console.WriteLine("successfully made PC");
+                try
+                {
+                    activeGame = gc.RunGame();
+                }
+                catch (System.Exception ex)
+                {
+                    string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
+                    int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
+                    gc.Repo.LogException(gc.Data, $"General exception {currentFile} line {currentLine}", ex, true);
+                    activeGame = false;
+                }
             }
-            Console.ReadLine();
         }
     }
 }
