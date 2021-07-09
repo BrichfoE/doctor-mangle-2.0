@@ -16,7 +16,7 @@ namespace doctor_mangle
     {
         public GameData Data { get; set; }
         public GameRepo Repo { get; set; }
-        public ArenaBattleCalculator Arena { get; set; }
+        public IBattleService Arena { get; set; }
         public PlayerService _playerService { get; set; }
         public PlayerData[] AllPlayers { get; set; }
         private IParkService _parkService { get; set; }
@@ -29,7 +29,7 @@ namespace doctor_mangle
             int intInput = 3;
 
             Repo = new GameRepo();
-            Arena = new ArenaBattleCalculator();
+            Arena = new BattleService();
             _playerService = new PlayerService();
             _parkService = new ParkService();
 
@@ -69,7 +69,7 @@ namespace doctor_mangle
         }
 
         public GameController(bool forTest) {
-            Arena = new ArenaBattleCalculator();
+            Arena = new BattleService();
             _playerService = new PlayerService();
         }
 
@@ -726,6 +726,11 @@ namespace doctor_mangle
                         StaticUtility.TalkPause("Draw your eyes to the arena!");
                         PlayerData left = fighters.Dequeue();
                         PlayerData right = fighters.Dequeue();
+
+                        Console.WriteLine("In the blue corner, " + left.Name + " presents " + left.Monster.Name);
+                        Console.WriteLine(left.Monster.Name + " boasts " + left.Monster.Wins + " wins!");
+                        Console.WriteLine("In the green corner, " + right.Name + " presents " + right.Monster.Name);
+                        Console.WriteLine(right.Monster.Name + " boasts " + right.Monster.Wins + " wins!");
                         fighters.Enqueue(Arena.MonsterFight(left, right));
 
                     }

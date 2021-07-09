@@ -270,11 +270,12 @@ namespace doctor_mangle.test.services
             _playerService = new PlayerService();
             var player = new PlayerData() { Monster = new MonsterData() };
             player.SpareParts[structureType] = 10;
-            player.Monster.Parts[0] = new Head() {
+            player.Monster.Parts.Add(new Head()
+            {
                 PartRarity = Rarity.Common,
                 PartStructure = structureType,
                 PartDurability = 0
-            };
+            });
             var expected = $"Common {structureType} head is now at 1 durability.\r\nYou now have 0 {structureType} parts.";
 
             // act

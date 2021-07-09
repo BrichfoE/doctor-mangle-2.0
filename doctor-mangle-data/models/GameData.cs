@@ -14,7 +14,7 @@ namespace doctor_mangle
         public string GameName { get; set; }
         public int GameDataId { get; set; }
         public ParkData[] Parks { get; set; }
-        public ArenaBattleCalculator Arena { get; set; }
+        public BattleService Arena { get; set; }
         public int CurrentRegion { get; set; }
         public string RegionText
         {
