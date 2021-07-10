@@ -723,14 +723,9 @@ namespace doctor_mangle
                     }
                     else
                     {
-                        StaticUtility.TalkPause("Draw your eyes to the arena!");
                         PlayerData left = fighters.Dequeue();
                         PlayerData right = fighters.Dequeue();
 
-                        Console.WriteLine("In the blue corner, " + left.Name + " presents " + left.Monster.Name);
-                        Console.WriteLine(left.Monster.Name + " boasts " + left.Monster.Wins + " wins!");
-                        Console.WriteLine("In the green corner, " + right.Name + " presents " + right.Monster.Name);
-                        Console.WriteLine(right.Monster.Name + " boasts " + right.Monster.Wins + " wins!");
                         fighters.Enqueue(Arena.MonsterFight(left, right));
 
                     }

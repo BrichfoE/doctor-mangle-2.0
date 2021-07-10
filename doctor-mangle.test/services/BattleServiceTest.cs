@@ -53,6 +53,7 @@ namespace doctor_mangle.test.services
             mockRandom.Setup(x => x.NextDouble())
                 .Returns(1);
             _service = new BattleService(mockRandom.Object);
+            var expectedRoundCount = 2;
 
 
             var winner = new PlayerData()
@@ -71,6 +72,7 @@ namespace doctor_mangle.test.services
 
             //assert
             Assert.AreEqual(winner, actual);
+            // Assert.AreEqual(expectedRoundCount, actual);
         }
 
 
@@ -79,7 +81,7 @@ namespace doctor_mangle.test.services
         [TestCase(true, 1, Part.torso)]
         [TestCase(false, 0, Part.head)]
         [TestCase(false, 1, Part.torso)]
-        [TestCase(false, 2, Part.head)]
+        [TestCase(false, 2, Part.arm)]
         public void GetTarget_Criticalhit(bool crit, int roll, Part expected)
         {
             //arrange
