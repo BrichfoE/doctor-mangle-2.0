@@ -9,6 +9,7 @@ using doctor_mangle.utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace doctor_mangle
 {
@@ -726,7 +727,14 @@ namespace doctor_mangle
                         PlayerData left = fighters.Dequeue();
                         PlayerData right = fighters.Dequeue();
 
-                        fighters.Enqueue(Arena.MonsterFight(left, right));
+                        var result = Arena.MonsterFight(left, right);
+                        foreach (var line in result.Text)
+                        {
+                            Console.WriteLine(line);
+                            Thread.Sleep(1000);
+                        }
+
+                        fighters.Enqueue(result.Winner);
 
                     }
                     if (fighters.Count <= Math.Ceiling(countTotal / 2))

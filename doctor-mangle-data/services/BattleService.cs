@@ -1,13 +1,10 @@
 ﻿using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
+using doctor_mangle.models.battles;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace doctor_mangle.services
 {
@@ -15,9 +12,9 @@ namespace doctor_mangle.services
     {
         private readonly Random _rng;
 
-        public BattleService() 
+        public BattleService()
         {
-            _rng = new Random(); 
+            _rng = new Random();
         }
 
         public BattleService(Random rng)
@@ -25,9 +22,9 @@ namespace doctor_mangle.services
             _rng = rng;
         }
 
-        public PlayerData MonsterFight(PlayerData blue, PlayerData green)
+        public Battle MonsterFight(PlayerData blue, PlayerData green)
         {
-            var script = new BattleScript()
+            var script = new Battle()
             {
                 BlueCorner = blue,
                 GreenCorner = green
@@ -42,87 +39,73 @@ namespace doctor_mangle.services
 
             while (script.Blue.CanFight && script.Green.CanFight)
             {
-                MonsterData attck;
-                MonsterData reply;
-                if (script.Green.MonsterStats[Stat.Alacrity] > script.Blue.MonsterStats[Stat.Alacrity])
+                var round = new BattleRound();
+                script.Rounds.Add(round);
+
+                if (script.Green.MonsterStats[Stat.Alacrity] * (float)_rng.NextDouble() > script.Blue.MonsterStats[Stat.Alacrity] * (float)_rng.NextDouble())
                 {
-                    attck = script.Green;
-                    reply = script.Blue;
+                    round.Attacker = script.Green;
+                    round.Defender = script.Blue;
                 }
                 else
                 {
-                    attck = script.Blue;
-                    reply = script.Green;
+                    round.Attacker = script.Blue;
+                    round.Defender = script.Green;
                 }
-                script.Debug.Add($"Attack: {attck.Name}, Reply: {reply.Name}");
 
+                var attckStat = round.Attacker.MonsterStats[Stat.Strength] + round.Attacker.MonsterStats[Stat.Alacrity];
+                var replyStat = round.Defender.MonsterStats[Stat.Strength] + round.Defender.MonsterStats[Stat.Alacrity];
 
-                float strke = ((float)_rng.NextDouble() * attck.MonsterStats[Stat.Strength]);
-                float parry = ((float)_rng.NextDouble() * reply.MonsterStats[Stat.Alacrity]);
-                float repst = ((float)_rng.NextDouble() * reply.MonsterStats[Stat.Alacrity]);
-                float block = ((float)_rng.NextDouble() * attck.MonsterStats[Stat.Strength]);
-                script.Debug[script.Debug.Count-1] += $" Strike: { strke}, Parry: { parry}, Repost: {repst}, Block: {block},";
-
-                BodyPart attackTarget;
-                BodyPart replyTarget;
+                round.Strike = (float)_rng.NextDouble() * attckStat;
+                round.Parry = 1 / ((float)_rng.NextDouble() * replyStat);
+                round.Repost = ((float)_rng.NextDouble() * replyStat);
+                round.Block = 1 / ((float)_rng.NextDouble() * replyStat);
 
                 //add technical to strike to hit head or torso
-                attackTarget = GetTarget(reply, attck.Name, (_rng.Next(1, 101)) < (attck.MonsterStats[Stat.Technique] / 10000));
+                round.AttackTarget = GetTarget(round.Defender, round.Attacker.Name, (_rng.Next(1, 101)) < (round.Attacker.MonsterStats[Stat.Technique] / 10000));
 
                 //add technical to repost to hit head or torso
-                replyTarget = GetTarget(attck, reply.Name, (_rng.Next(1, 101)) < (reply.MonsterStats[Stat.Technique] / 10000));
+                round.ReplyTarget = GetTarget(round.Attacker, round.Defender.Name, (_rng.Next(1, 101)) < (round.Defender.MonsterStats[Stat.Technique] / 10000));
 
-                script.Debug[script.Debug.Count - 1] += $" AttackTarget: {attackTarget.PartType}, ReplyTarget: {replyTarget.PartType},";
-
-                //strike vs parry, result decreases random part damage
-                script.Text.Add($"{attck.Name} swings at {reply.Name}'s {attackTarget.PartName}!");
-                if (strke > parry)
+                //strike vs round.Parry, result decreases random part damage
+                script.Text.Add($"{round.Attacker.Name} swings at {round.Defender.Name}'s {round.AttackTarget.PartName}!");
+                if (!round.AttackBlocked)
                 {
-                    decimal reduction = (decimal)(strke / (parry * attackTarget.PartStats[Stat.Endurance]));
-                    script.Text.Add($"{attackTarget.PartName} goes from {attackTarget.PartDurability} to {attackTarget.PartDurability-reduction}");
-                    attackTarget.PartDurability -= reduction;
-                    script.Debug[script.Debug.Count - 1] += $" AttackDamage: {reduction},";
+                    round.AttackDamage = (decimal)(round.Strike  / ((round.Parry + round.AttackTarget.PartStats[Stat.Endurance]) * 20 * _rng.NextDouble()));
+                    script.Text.Add($"{round.AttackTarget.PartName} goes from {round.AttackTarget.PartDurability} to {round.AttackTarget.PartDurability - round.AttackDamage }");
+                    round.AttackTarget.PartDurability -= round.AttackDamage;
                 }
                 else
                 {
-                    script.Text.Add($"{attck.Name} 's strike is blocked!");
-                    script.Debug[script.Debug.Count - 1] += $" AttackDamage: 0,";
+                    script.Text.Add($"{round.Attacker.Name} 's strike is blocked!");
                 }
 
-                if (attackTarget.PartDurability <= 0)
+                if (round.AttackTarget.PartDurability <= 0)
                 {
-                    script.Text.Add($"{reply}'s {attackTarget.PartName} has been destroyed!");
+                    script.Text.Add($"{round.Defender}'s {round.AttackTarget.PartName} has been destroyed!");
                 }
-                script.Debug[script.Debug.Count - 1] += $" AttackTargetDestroyed: {attackTarget.PartDurability <= 0}";
 
-                if (reply.CanFight)
+                if (round.Defender.CanFight)
                 {
                     //repost vs block, result decreases random part damage
-                    script.Debug[script.Debug.Count - 1] += $" Counter: True,";
-                    script.Text.Add($"{ reply.Name} counters at {attck.Name}'s {replyTarget.PartName}!");
-                    if (strke > parry)
+                    round.CounterAttempted = true;
+                    script.Text.Add($"{ round.Defender.Name} counters at {round.Attacker.Name}'s {round.ReplyTarget.PartName}!");
+                    if (!round.RepostBlocked)
                     {
-                        decimal reduction = (decimal)((repst - block) / 5);
-                        script.Text.Add($"{replyTarget.PartName} goes from {replyTarget.PartDurability} to {replyTarget.PartDurability - reduction}");
-                        replyTarget.PartDurability -= reduction;
-                        script.Debug[script.Debug.Count - 1] += $" ReplyDamage: {reduction},";
+                        round.ReplyDamage = (decimal)(round.Repost / ((round.Block + round.ReplyTarget.PartStats[Stat.Endurance]) * 20 * _rng.NextDouble()));
+                        script.Text.Add($"{round.ReplyTarget.PartName} goes from {round.ReplyTarget.PartDurability} to {round.ReplyTarget.PartDurability - round.ReplyDamage}");
+                        round.ReplyTarget.PartDurability -= round.ReplyDamage;
                     }
                     else
                     {
-                        script.Text.Add($"{reply.Name} 's counter is blocked!");
-                        script.Debug[script.Debug.Count - 1] += $" ReplyDamage: 0,";
+                        script.Text.Add($"{round.Defender.Name} 's counter is blocked!");
                     }
-                    if (replyTarget.PartDurability <= 0)
+
+                    if (round.ReplyTarget.PartDurability <= 0)
                     {
-                        script.Text.Add($"{attck}'s {replyTarget.PartName} has been destroyed!");
+                        script.Text.Add($"{round.Attacker}'s {round.ReplyTarget.PartName} has been destroyed!");
                     }
-                    script.Debug[script.Debug.Count - 1] += $" ReplyTargetDestroyed: {replyTarget.PartDurability <= 0}";
                 }
-                else
-                {
-                    script.Debug[script.Debug.Count - 1] += $" Counter: false, ReplyDamage: 0, ReplyTargetDestroyed: False";
-                }
-                
             }
 
             // only one mostner is left standing, determine who it is
@@ -144,7 +127,7 @@ namespace doctor_mangle.services
             green.FightsCount ++;
             green.Monster.Fights ++;
 
-            return script.Winner;
+            return script;
         }
 
         public BodyPart GetTarget(MonsterData targetMonster, string attackerName, bool criticalHit)
