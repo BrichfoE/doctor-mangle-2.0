@@ -15,22 +15,22 @@ namespace doctor_mangle
 {
     public class GameController
     {
+        private readonly IBattleService _battleService;
         public GameData Data { get; set; }
         public GameRepo Repo { get; set; }
-        public IBattleService Arena { get; set; }
         public PlayerService _playerService { get; set; }
         public PlayerData[] AllPlayers { get; set; }
         private IParkService _parkService { get; set; }
         private Random RNG = new Random();
         private string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
 
-        public GameController()
+        public GameController(IBattleService battleService)
         {
+            this._battleService = battleService;
             string textInput = "default";
             int intInput = 3;
 
             Repo = new GameRepo();
-            Arena = new BattleService();
             _playerService = new PlayerService();
             _parkService = new ParkService();
 
@@ -70,7 +70,6 @@ namespace doctor_mangle
         }
 
         public GameController(bool forTest) {
-            Arena = new BattleService();
             _playerService = new PlayerService();
         }
 
@@ -708,7 +707,7 @@ namespace doctor_mangle
             else if (fighters.Count == 1)
             {
                 StaticUtility.TalkPause("Only one of you managed to scrape together a monster?  No shows tonight, but rewards for the one busy beaver.");
-                Arena.GrantCash(fighters.Dequeue(), 1);
+                _battleService.GrantCash(fighters.Dequeue(), 1);
             }
             else
             {
@@ -720,14 +719,14 @@ namespace doctor_mangle
                     if (fighters.Count == 1)
                     {
                         StaticUtility.TalkPause("And we have a winner!");
-                        Arena.GrantCash(fighters.Dequeue(), round);
+                        _battleService.GrantCash(fighters.Dequeue(), round);
                     }
                     else
                     {
                         PlayerData left = fighters.Dequeue();
                         PlayerData right = fighters.Dequeue();
 
-                        var result = Arena.MonsterFight(left, right);
+                        var result = _battleService.MonsterFight(left, right);
                         foreach (var line in result.Text)
                         {
                             Console.WriteLine(line);

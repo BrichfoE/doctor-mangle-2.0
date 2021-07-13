@@ -12,14 +12,9 @@ namespace doctor_mangle.services
     {
         private readonly Random _rng;
 
-        public BattleService()
-        {
-            _rng = new Random();
-        }
-
         public BattleService(Random rng)
         {
-            _rng = rng;
+            this._rng = rng;
         }
 
         public Battle MonsterFight(PlayerData blue, PlayerData green)

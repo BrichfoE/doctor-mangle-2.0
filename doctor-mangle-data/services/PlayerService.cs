@@ -15,11 +15,11 @@ namespace doctor_mangle.Service
         private PartComparer _comparer = new PartComparer();
         public PartComparer Comparer { get => _comparer; }
 
-        // todo: remove parameterless constructor once we get depdency injection going
+        // todo: remove parameterless constructor once we fix the GameData/GameController mess
         public PlayerService() { _rng = new Random(); }
         public PlayerService(Random rng)
         {
-            _rng = rng;
+            this._rng = rng;
         }
         public PlayerData GeneratePlayer(string playerName, bool isAI)
         {
