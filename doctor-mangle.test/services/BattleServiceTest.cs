@@ -12,11 +12,6 @@ namespace doctor_mangle.test.services
     [TestFixture]
     public class BattleServiceTest
     {
-        // public BattleServiceTest(IBattleService battleService)
-        // {
-        //     _service = battleService;
-        // }
-
         private IBattleService _service;
 
         private MonsterData GenerateMonster(float stat, decimal durability, string? name)

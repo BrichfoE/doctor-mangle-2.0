@@ -3,7 +3,8 @@ using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
-using doctor_mangle.Service;
+using doctor_mangle.services;
+using Moq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,12 @@ namespace doctor_mangle.test.services
     [TestFixture]
     public class PlayerServiceTest
     {
-        private IPlayerService _playerService;
+        private IPlayerService GenerateService(double expected)
+        {
+            var mRandom = TestUtils.GetMockRandom_NextDouble(expected);
+            var mCompare = new Mock<IComparer<BodyPart>>();
+            return new PlayerService(mCompare.Object, mRandom.Object);
+        }
 
         [Test]
         [TestCase("", true)]
@@ -25,15 +31,14 @@ namespace doctor_mangle.test.services
         public void GeneratePlayer_ReturnsNotNull(string name, bool isAI)
         {
             // arrange
-            var mRandom = TestUtils.GetMockRandom_NextDouble(0);
-            _playerService = new PlayerService(mRandom.Object);
+            var playerService = GenerateService(0);
 
             var expectedName = isAI || name == null || name == ""
                 ? "Cool Luke"
                 : name;
 
             // act
-            PlayerData result = _playerService.GeneratePlayer(name, isAI);
+            PlayerData result = playerService.GeneratePlayer(name, isAI);
 
             // assert
             Assert.IsNotNull(result);
@@ -61,8 +66,7 @@ namespace doctor_mangle.test.services
         public void GenerateRandomName_ReturnsExpected(double roll)
         {
             // arrange
-            var mRandom = TestUtils.GetMockRandom_NextDouble(roll);
-            _playerService = new PlayerService(mRandom.Object);
+            var playerService = GenerateService(roll);
 
             double adjIndex = roll * (StaticReference.adjectives.Length - 1);
             double nmeIndex = roll * (StaticReference.names.Length - 1);
@@ -72,7 +76,7 @@ namespace doctor_mangle.test.services
             var expected = adj + " " + nme;
 
             // act
-            string result = _playerService.GenerateRandomName();
+            string result = playerService.GenerateRandomName();
 
             // assert
             Assert.IsNotNull(result);
@@ -85,7 +89,7 @@ namespace doctor_mangle.test.services
         public void CheckBag_ReturnsExpected(bool isAI)
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
 
             var testPlayer = new PlayerData()
             {
@@ -104,7 +108,7 @@ namespace doctor_mangle.test.services
                     "4 - Common Animal left leg\r\n";
 
             // act
-            string result = _playerService.CheckBag(testPlayer);
+            string result = playerService.CheckBag(testPlayer);
 
             // assert
             Assert.IsNotNull(result);
@@ -150,8 +154,7 @@ namespace doctor_mangle.test.services
         public void ScrapItem_ReturnsExpected(Rarity rarity, double roll, decimal durability)
         {
             // arrange
-            var mRandom = TestUtils.GetMockRandom_NextDouble(roll);
-            _playerService = new PlayerService(mRandom.Object);
+            var playerService = GenerateService(roll);
 
             var partType = Structure.Animal;
             var scraps = new Dictionary<Structure, int>() { { partType, 10 } };
@@ -172,7 +175,7 @@ namespace doctor_mangle.test.services
             string expected = $"You salvaged {expectedAmount} {partType} parts from a {rarity} {partType} head.";
 
             // act
-            string result = _playerService.ScrapItem(scraps, parts, 1);
+            string result = playerService.ScrapItem(scraps, parts, 1);
 
             // assert
             Assert.AreEqual(2, parts.Count);
@@ -195,7 +198,7 @@ namespace doctor_mangle.test.services
         public void GetRepairCost_ReturnsNotNull(Rarity rarity, decimal durability)
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var testPart = new Head()
             {
                 PartDurability = durability,
@@ -208,7 +211,7 @@ namespace doctor_mangle.test.services
             int expected = (int)(fullPrice * toFix);
 
             // act
-            int result = _playerService.GetRepairCost(testPart);
+            int result = playerService.GetRepairCost(testPart);
 
             // assert
             Assert.IsNotNull(result);
@@ -227,7 +230,7 @@ namespace doctor_mangle.test.services
         public void RepairPart(Rarity rare, decimal durability)
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var prt = new Head()
             {
                 PartDurability = durability,
@@ -251,7 +254,7 @@ namespace doctor_mangle.test.services
             }
 
             // act
-            var result = _playerService.RepairPart(prt, scraps);
+            var result = playerService.RepairPart(prt, scraps);
 
             // assert
             Assert.AreEqual(expected, result);
@@ -267,7 +270,7 @@ namespace doctor_mangle.test.services
         public void OrchestratePartRepair_UpdatesCount(Structure structureType)
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var player = new PlayerData() { Monster = new MonsterData() };
             player.SpareParts[structureType] = 10;
             player.Monster.Parts.Add(new Head()
@@ -279,7 +282,7 @@ namespace doctor_mangle.test.services
             var expected = $"Common {structureType} head is now at 1 durability.\r\nYou now have 0 {structureType} parts.";
 
             // act
-            var result = _playerService.OrchestratePartRepair(player, 0);
+            var result = playerService.OrchestratePartRepair(player, 0);
 
             // assert
             Assert.AreEqual(0, player.SpareParts[structureType]);
@@ -296,7 +299,7 @@ namespace doctor_mangle.test.services
         public void DumpBagIntoWorkshop_ReturnsCorrectCount(int bagStart, int workshopStart)
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var player = new PlayerData();
             for (int i = 0; i < workshopStart; i++)
             {
@@ -309,7 +312,7 @@ namespace doctor_mangle.test.services
             var expected = bagStart + workshopStart;
 
             // act
-            _playerService.DumpBagIntoWorkshop(player);
+            playerService.DumpBagIntoWorkshop(player);
             var bagCount = 0;
             foreach (var item in player.Bag)
             {
@@ -329,7 +332,7 @@ namespace doctor_mangle.test.services
         public void GetCheckWorkshopItemList_ReturnsCorrectString(int workshopCount)
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var player = new PlayerData();
             var expected = "Workshop Items:\r\n";
             for (int i = 0; i < workshopCount; i++)
@@ -347,7 +350,7 @@ namespace doctor_mangle.test.services
             }
 
             // act
-            var result = _playerService.GetWorkshopItemList(player);
+            var result = playerService.GetWorkshopItemList(player);
 
             // assert
             Assert.AreEqual(expected, result);
@@ -357,7 +360,7 @@ namespace doctor_mangle.test.services
         public void Compare_ByWins()
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var winner = new PlayerData()
             {
                 WinsCount = 2,
@@ -372,8 +375,8 @@ namespace doctor_mangle.test.services
             };
 
             // act
-            var result1 = _playerService.Compare(winner, loser);
-            var result2 = _playerService.Compare(loser, winner);
+            var result1 = playerService.Compare(winner, loser);
+            var result2 = playerService.Compare(loser, winner);
 
             // assert
             Assert.AreEqual(1, result1);
@@ -384,7 +387,7 @@ namespace doctor_mangle.test.services
         public void Compare_ByFights()
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var winner = new PlayerData()
             {
                 WinsCount = 2,
@@ -399,8 +402,8 @@ namespace doctor_mangle.test.services
             };
 
             // act
-            var result1 = _playerService.Compare(winner, loser);
-            var result2 = _playerService.Compare(loser, winner);
+            var result1 = playerService.Compare(winner, loser);
+            var result2 = playerService.Compare(loser, winner);
 
             // assert
             Assert.AreEqual(1, result1);
@@ -411,7 +414,7 @@ namespace doctor_mangle.test.services
         public void Compare_ByName()
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var winner = new PlayerData()
             {
                 WinsCount = 2,
@@ -426,8 +429,8 @@ namespace doctor_mangle.test.services
             };
 
             // act
-            var result1 = _playerService.Compare(winner, loser);
-            var result2 = _playerService.Compare(loser, winner);
+            var result1 = playerService.Compare(winner, loser);
+            var result2 = playerService.Compare(loser, winner);
 
             // assert
             Assert.AreEqual(1, result1);
@@ -438,7 +441,7 @@ namespace doctor_mangle.test.services
         public void Compare_AreEqual()
         {
             // arrange
-            _playerService = new PlayerService();
+            var playerService = GenerateService(0);
             var winner = new PlayerData()
             {
                 WinsCount = 2,
@@ -455,8 +458,8 @@ namespace doctor_mangle.test.services
             // act
 
             // act
-            var result1 = _playerService.Compare(winner, loser);
-            var result2 = _playerService.Compare(loser, winner);
+            var result1 = playerService.Compare(winner, loser);
+            var result2 = playerService.Compare(loser, winner);
 
             // assert
             Assert.AreEqual(0, result1);

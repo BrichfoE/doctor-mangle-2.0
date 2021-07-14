@@ -7,7 +7,7 @@ namespace doctor_mangle.interfaces
     {
         ParkData[] GenerateParks();
 
-        ParkData[] AddParts(ParkData[] locations, Random RNG, int playerCount);
+        ParkData[] AddParts(ParkData[] locations, int playerCount);
 
         ParkData[] HalveParts(ParkData[] locations);
     }

@@ -1,4 +1,5 @@
-﻿using doctor_mangle.utility;
+﻿using doctor_mangle.models;
+using doctor_mangle.utility;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
