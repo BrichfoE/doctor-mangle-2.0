@@ -11,24 +11,19 @@ namespace doctor_mangle
 {
     public class GameService : IGameService
     {
-        private readonly IBattleService _battleService;
         private readonly IParkService _parkService;
         private readonly IPlayerService _playerService;
         private readonly IComparer<BodyPart> _partComparer;
         private readonly Random _rng;
-        public GameData Data { get; set; }
-        public GameRepo Repo { get; set; }
 
         public GameService(
             IPlayerService playerService,
             IParkService parkService,
-            IBattleService battleService,
             IComparer<BodyPart> partComparer,
             Random random)
         {
             this._parkService = parkService;
             this._playerService = playerService;
-            this._battleService = battleService;
             this._partComparer = partComparer;
             this._rng = random;
         }
@@ -160,31 +155,6 @@ namespace doctor_mangle
                     gd.Parks[region].PartsList.RemoveLast();
                 }
             }
-        }
-        public PlayerData[] SortPlayersByWins(PlayerData[] players)
-        {
-            for (int i = 0; i < players.Length; i++)
-            {
-                PlayerData left = players[i];
-                PlayerData high = players[i];
-                int highIndex = i;
-
-                for (int j = i + 1; j < players.Length; j++)
-                {
-                    if (_playerService.Compare(high, players[j]) < 0)
-                    {
-                        high = players[j];
-                        highIndex = j;
-                    }
-                }
-
-                if (left != high)
-                {
-                    players[highIndex] = left;
-                    players[i] = high;
-                }
-            }
-            return players;
         }
     }
 }

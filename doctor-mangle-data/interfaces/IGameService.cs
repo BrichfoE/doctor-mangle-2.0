@@ -11,6 +11,5 @@ namespace doctor_mangle.interfaces
         string PrintRegionOptions(GameData gameData);
         void AISearchTurn(GameData gd, int round);
         void AIBuildTurn(GameData data);
-        PlayerData[] SortPlayersByWins(PlayerData[] players);
     }
 }

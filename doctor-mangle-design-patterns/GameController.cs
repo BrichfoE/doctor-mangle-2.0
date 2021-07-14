@@ -192,7 +192,7 @@ namespace doctor_mangle_design_patterns
             #region dayEnd
             try
             {
-                AllPlayers = _gameService.SortPlayersByWins(AllPlayers);
+                AllPlayers = _playerService.SortPlayersByWins(AllPlayers);
                 Data.Parks = _parkService.AddParts(Data.Parks, AllPlayers.Length);
                 Data.Parks = _parkService.HalveParts(Data.Parks);
                 Data.GameDayNumber++;

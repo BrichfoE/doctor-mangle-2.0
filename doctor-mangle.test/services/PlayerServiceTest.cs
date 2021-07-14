@@ -456,14 +456,47 @@ namespace doctor_mangle.test.services
             };
 
             // act
-
-            // act
             var result1 = playerService.Compare(winner, loser);
             var result2 = playerService.Compare(loser, winner);
 
             // assert
             Assert.AreEqual(0, result1);
             Assert.AreEqual(0, result2);
+        }
+
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(5)]
+        [TestCase(10)]
+        [TestCase(50)]
+        public void SortPlayersByWins_ReturnsSorted(int count)
+        {
+            // arrange
+            var playerService = GenerateService(0);
+            var players = new List<PlayerData>();
+            var stack = new Stack<PlayerData>();
+            var rng = new Random();
+            for (int i = 0; i < count; i++)
+            {
+                var newPlayer = new PlayerData() { WinsCount = i, FightsCount = i, Name = i.ToString() };
+                players.Insert(rng.Next(0, i), newPlayer);
+                stack.Push(newPlayer);
+            }
+            var expected = stack.ToArray();
+
+            // act
+            var actual = playerService.SortPlayersByWins(players.ToArray());
+
+            // assert
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(stack.Count, actual.Length);
+            for (int i = 0; i < actual.Length; i++)
+            {
+                Assert.AreEqual(expected[i], actual[i]);
+            }
         }
     }
 }

@@ -152,6 +152,31 @@ namespace doctor_mangle.services
             }
             return result;
         }
+        public PlayerData[] SortPlayersByWins(PlayerData[] players)
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                PlayerData left = players[i];
+                PlayerData high = players[i];
+                int highIndex = i;
+
+                for (int j = i + 1; j < players.Length; j++)
+                {
+                    if (Compare(high, players[j]) < 0)
+                    {
+                        high = players[j];
+                        highIndex = j;
+                    }
+                }
+
+                if (left != high)
+                {
+                    players[highIndex] = left;
+                    players[i] = high;
+                }
+            }
+            return players;
+        }
 
         public int Compare(PlayerData x, PlayerData y)
         {
