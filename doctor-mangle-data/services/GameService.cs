@@ -96,7 +96,7 @@ namespace doctor_mangle
                     }
                     else
                     {
-                        for (int i = 0; i < 6; i++)
+                        for (int i = 0; i < ai.Monster.Parts.Count; i++)
                         {
                             monst[i] = ai.Monster.Parts[i];
                         }
