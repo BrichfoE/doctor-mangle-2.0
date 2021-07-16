@@ -50,6 +50,7 @@ namespace doctor_mangle.test.services
                     break;
             }
             part.PartRarity = rarity;
+            part.PartDurability = 1;
             return part;
         }
 
@@ -209,14 +210,13 @@ namespace doctor_mangle.test.services
             AddParts(tors.Parts, Rarity.Unicorn, Rarity.Common, Rarity.Unicorn);
             var both = new MonsterData() { Name = "both" };
             AddParts(both.Parts, Rarity.Common, Rarity.Common, Rarity.Common);
-            var oldLimb = limb.Parts[2];
 
             var players = new PlayerData[]
             {
+                new PlayerData(){ WorkshopCuppoard = new List<BodyPart>(), Name = "SansParts" },
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = best, Name = "BestMonster"},
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = limb, Name = "BetterLimbs"},
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Name = "SansMonster" },
-                new PlayerData(){ WorkshopCuppoard = new List<BodyPart>(), Name = "SansParts" },
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = head, Name = "BetterHead"},
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = tors, Name = "BetterTorso"},
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = both, Name = "BetterBoth"}
@@ -231,16 +231,13 @@ namespace doctor_mangle.test.services
             gameService.AIBuildTurn(gameData);
 
             // Assert
-            // we killed monsters that had better heads and torsos
-            // Assert.AreEqual(3, gameData.Graveyard.Count);
-            Assert.IsTrue(gameData.Graveyard.Any(x => x.Name == "head"));
-            Assert.IsTrue(gameData.Graveyard.Any(x => x.Name == "tors"));
-            // Assert.IsTrue(gameData.Graveyard.Any(x => x.Name == "both"));
-            // Assert.AreEqual(best, gameData.AiPlayers[0].Monster);
-            // Assert.AreEqual(limb, gameData.AiPlayers[1].Monster);
-            // Assert.AreNotEqual(oldLimb, gameData.AiPlayers[1].Monster.Parts[2]);
-            // Assert.IsNotNull(gameData.AiPlayers[2].Monster);
-            Assert.IsNull(gameData.AiPlayers[3].Monster);
+            Assert.IsNull(gameData.AiPlayers[0].Monster);
+            Assert.AreEqual(0, gameData.AiPlayers[0].WorkshopCuppoard.Count);
+            for (int i = 1; i < players.Length; i++)
+            {
+                Assert.IsNotNull(gameData.AiPlayers[i].Monster);
+                Assert.AreEqual(0, gameData.AiPlayers[i].WorkshopCuppoard.Count);
+            }
         }
 
 

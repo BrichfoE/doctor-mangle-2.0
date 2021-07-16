@@ -69,6 +69,51 @@ namespace doctor_mangle
         {
             foreach (var ai in data.AiPlayers)
             {
+                var monst = new List<BodyPart>();
+
+                if (ai.Monster != null)
+                {
+                    ai.WorkshopCuppoard.AddRange(ai.Monster.Parts);
+                    ai.Monster.Parts.Clear();
+                }
+
+                bool hasHead = false;
+                bool hasTorso = false;
+                for (int i = ai.WorkshopCuppoard.Count-1; i >= 0; i--)
+                {
+                    var item = ai.WorkshopCuppoard[i];
+                    if (item.PartDurability > 0)
+                    {
+                        monst.Add(item);
+                        hasHead = hasHead || item.GetType() == typeof(Head);
+                        hasTorso = hasTorso || item.GetType() == typeof(Torso);
+                    }
+                    else
+                    {
+                        _playerService.ScrapItem(ai.SpareParts, ai.WorkshopCuppoard, i);
+                    }
+                }
+                // ensure ai has a viable monster
+                if (hasHead && hasTorso && monst.Count > 2)
+                {
+                    if (ai.Monster == null)
+                    {
+                        ai.Monster = new MonsterData(ai.Name + "'s Monster", monst);
+                    }
+                    else
+                    {
+                        ai.Monster.Parts.AddRange(monst);
+                    }
+                    ai.WorkshopCuppoard.Clear();
+                }
+            }
+        }
+
+        // deprecated - used to limit to 6 parts, need to rethink how to keep players from adding infinite parts for best monster
+        private void OldAIBuildTurn(GameData data)
+        {
+            foreach (var ai in data.AiPlayers)
+            {
                 int start = 0;
                 var monst = new BodyPart[6];
                 if (ai.Monster != null)
@@ -76,11 +121,11 @@ namespace doctor_mangle
                     bool betterBody = false;
                     List<BodyPart> heads = ai.WorkshopCuppoard
                         .Where(x => x.PartType == Part.head
-                            && x.PartRarity < ai.Monster.Parts[0].PartRarity)
+                            && x.PartRarity > ai.Monster.Parts[0].PartRarity)
                         .ToList();
                     List<BodyPart> torsos = ai.WorkshopCuppoard
                         .Where(x => x.PartType == Part.torso
-                            && x.PartRarity < ai.Monster.Parts[1].PartRarity).
+                            && x.PartRarity > ai.Monster.Parts[1].PartRarity).
                         ToList();
                     if (heads.Count > 0 || torsos.Count > 0) betterBody = true;
 
@@ -103,6 +148,7 @@ namespace doctor_mangle
                         start = 2;
                     }
                 }
+                // replace any limbs with better parts
                 for (int i = start; i < 6; i++)
                 {
                     for (int j = ai.WorkshopCuppoard.Count - 1; j >= 0; j--)
@@ -127,11 +173,29 @@ namespace doctor_mangle
                         }
                     }
                 }
+                // ensure ai has a viable monster
                 if (monst[0] != null && monst[1] != null)
                 {
                     if (monst[2] != null || monst[3] != null || monst[4] != null || monst[5] != null)
                     {
-                        ai.Monster = new MonsterData(ai.Name + "'s Monster", monst);
+                        if (ai.Monster == null)
+                        {
+                            ai.Monster = new MonsterData(ai.Name + "'s Monster", monst);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < monst.Length; i++)
+                            {
+                                if (ai.Monster.Parts.Count > i)
+                                {
+                                    ai.Monster.Parts[i] = monst[i];
+                                }
+                                else if (monst[i] != null)
+                                {
+                                    ai.Monster.Parts.Add(monst[i]);
+                                }
+                            }
+                        }
                         for (int i = ai.WorkshopCuppoard.Count - 1; i >= 0; i--)
                         {
                             if (ai.WorkshopCuppoard[i] != null)
