@@ -10,27 +10,21 @@ namespace doctor_mangle.test.services
     [TestFixture]
     public class ParkServiceTest
     {
-        // public ParkServiceTest(IParkServiceT parkServiceTest)
-        // {
-        //     _service = parkServiceTest;
-        // }
-
-        private IParkService _service;
-
-        [OneTimeSetUp]
-        public void Init()
+        private IParkService GenerateService(int expected)
         {
-            _service = new ParkService();
+            var mRandom = TestUtils.GetMockRandom_Next(expected);
+            return new ParkService(mRandom.Object);
         }
 
         [Test]
         public void GenerateParks_ReturnsNotNull_ExpectedArrayLength()
         {
             //arrange
+            var parkService = GenerateService(0);
             var expectedLength = 6;
 
             //act
-            var actual = _service.GenerateParks();
+            var actual = parkService.GenerateParks();
 
             //assert
             Assert.IsNotNull(actual);
@@ -41,6 +35,7 @@ namespace doctor_mangle.test.services
         public void GenerateParks_ReturnsExpectedData()
         {
             //arrange
+            var parkService = GenerateService(0);
             var expectedNames = new string[6]
             {
                 "Lab",
@@ -61,7 +56,7 @@ namespace doctor_mangle.test.services
             };
 
             //act
-            var actual = _service.GenerateParks();
+            var actual = parkService.GenerateParks();
 
             //assert
             for (int i = 0; i < actual.Length; i++)
@@ -82,15 +77,15 @@ namespace doctor_mangle.test.services
         public void AddParts(Structure structure, Part partType)
         {
             // arrange
+            var parkService = GenerateService((int)partType);
             var parks = new ParkData[1] {
                 new ParkData() {
                     ParkPart = structure
                 }
             };
-            var mockRng = TestUtils.GetMockRandom_Next((int)partType);
 
             // act
-            var actual = _service.AddParts(parks, mockRng.Object, 1);
+            var actual = parkService.AddParts(parks, 1);
 
             // assert
             Assert.AreEqual(1, actual.Length);
@@ -118,6 +113,7 @@ namespace doctor_mangle.test.services
         public void HalveParts_ReturnsNotNull(int initialLength)
         {
             //arrange
+            var parkService = GenerateService(0);
             var expectedLength = initialLength / 2;
             var parkData = new ParkData();
             for (int i = 0; i < initialLength; i++)
@@ -127,7 +123,7 @@ namespace doctor_mangle.test.services
             var locations = new ParkData[1] { parkData };
 
             //act
-            var actual = _service.HalveParts(locations);
+            var actual = parkService.HalveParts(locations);
 
             //assert
             Assert.IsNotNull(actual);
@@ -135,40 +131,3 @@ namespace doctor_mangle.test.services
         }
     }
 }
-
-
-//public ParkData[] AddParts(ParkData[] locations, Random RNG, int playerCount)
-//{
-//    for (int i = 1; i < locations.Length; i++)
-//    {
-//        int roll = RNG.Next(1, playerCount * 5);
-
-//        for (int j = 0; j < roll; j++)
-//        {
-//            var partRoll = RNG.Next(1, 4);
-//            BodyPartFactory factory;
-//            switch (partRoll)
-//            {
-//                case 1:
-//                    factory = new HeadFactory(locations[i].ParkPart);
-//                    break;
-//                case 2:
-//                    factory = new TorsoFactory(locations[i].ParkPart);
-//                    break;
-//                case 3:
-//                    factory = new ArmFactory(locations[i].ParkPart);
-//                    break;
-//                case 4:
-//                    factory = new LegFactory(locations[i].ParkPart);
-//                    break;
-//                default:
-//                    throw new ArgumentOutOfRangeException("ParkManager.AddParts - random role outside 1-4");
-//                    break;
-//            }
-//            var bodyPart = factory.BodyPart;
-//            locations[i].PartsList.AddLast(bodyPart);
-
-//        }
-//    }
-//    return locations;
-//}

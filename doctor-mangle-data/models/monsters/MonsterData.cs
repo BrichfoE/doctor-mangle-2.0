@@ -16,7 +16,9 @@ namespace doctor_mangle.models.monsters
                 { Stat.Endurance, 1f },
                 { Stat.Technique, 1f }
             };
-        public List<BodyPart> Parts { get => _parts; }
+        public List<BodyPart> Parts => _parts;
+        public List<BodyPart> Heads => _parts.Where(x => x.GetType() == typeof(Head)).ToList();
+        public List<BodyPart> Torsos => _parts.Where(x => x.GetType() == typeof(Torso)).ToList();
         public Dictionary<Stat, float> MonsterStats { get
             {
                 CalculateStats();
@@ -36,7 +38,7 @@ namespace doctor_mangle.models.monsters
         [JsonConstructor]
         public MonsterData() { }
 
-        public MonsterData(string newName, BodyPart[] newParts)
+        public MonsterData(string newName, IEnumerable<BodyPart> newParts)
         {
             Name = newName;
             foreach (var part in newParts)

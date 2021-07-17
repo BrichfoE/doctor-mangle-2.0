@@ -8,6 +8,11 @@ namespace doctor_mangle.services
 {
     public class ParkService : IParkService
     {
+        private readonly Random _rng;
+        public ParkService(Random random)
+        {
+            this._rng = random;
+        }
         public ParkData[] GenerateParks()
         {
             var _locations = new ParkData[6];
@@ -20,17 +25,17 @@ namespace doctor_mangle.services
             return _locations;
         }
 
-        public ParkData[] AddParts(ParkData[] locations, Random RNG, int playerCount)
+        public ParkData[] AddParts(ParkData[] locations, int playerCount)
         {
             for (int i = 0; i < locations.Length; i++)
             {
                 if (locations[i].ParkPart != 0)
                 {
-                    int roll = RNG.Next(1, playerCount * 5);
+                    int roll = _rng.Next(1, playerCount * 5);
 
                     for (int j = 0; j < roll; j++)
                     {
-                        var partRoll = RNG.Next(1, 4);
+                        var partRoll = _rng.Next(1, 4);
                         BodyPartFactory factory;
                         switch (partRoll)
                         {

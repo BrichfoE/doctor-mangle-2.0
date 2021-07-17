@@ -5,21 +5,17 @@ using doctor_mangle.models.parts;
 using System;
 using System.Collections.Generic;
 
-namespace doctor_mangle.Service
+namespace doctor_mangle.services
 {
     public class PlayerService : IPlayerService, IComparer<PlayerData>
     {
         private readonly Random _rng;
+        private readonly IComparer<BodyPart> _comparer;
 
-        // todo: make BodyPartService, transfer this there
-        private PartComparer _comparer = new PartComparer();
-        public PartComparer Comparer { get => _comparer; }
-
-        // todo: remove parameterless constructor once we get depdency injection going
-        public PlayerService() { _rng = new Random(); }
-        public PlayerService(Random rng)
+        public PlayerService(IComparer<BodyPart> partComparer, Random random)
         {
-            _rng = rng;
+            this._rng = random;
+            this._comparer = partComparer;
         }
         public PlayerData GeneratePlayer(string playerName, bool isAI)
         {
@@ -81,7 +77,7 @@ namespace doctor_mangle.Service
             string response = $"You salvaged {amount} {part.PartStructure} parts from a {part.PartName}.";
 
             storage.RemoveAt(reference);
-            storage.Sort(this.Comparer);
+            storage.Sort(this._comparer);
 
             return response;
         }
@@ -135,7 +131,7 @@ namespace doctor_mangle.Service
                     player.Bag[i] = null;
                 }
             }
-            player.WorkshopCuppoard.Sort(this.Comparer);
+            player.WorkshopCuppoard.Sort(this._comparer);
         }
 
         public string GetWorkshopItemList(PlayerData player)
@@ -155,6 +151,31 @@ namespace doctor_mangle.Service
                 result += "Workshop cuppboard is empty\r\n";
             }
             return result;
+        }
+        public PlayerData[] SortPlayersByWins(PlayerData[] players)
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                PlayerData left = players[i];
+                PlayerData high = players[i];
+                int highIndex = i;
+
+                for (int j = i + 1; j < players.Length; j++)
+                {
+                    if (Compare(high, players[j]) < 0)
+                    {
+                        high = players[j];
+                        highIndex = j;
+                    }
+                }
+
+                if (left != high)
+                {
+                    players[highIndex] = left;
+                    players[i] = high;
+                }
+            }
+            return players;
         }
 
         public int Compare(PlayerData x, PlayerData y)

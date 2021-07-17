@@ -1,37 +1,53 @@
-﻿using doctor_mangle.constants;
+﻿using doctor_mangle;
+using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
-using doctor_mangle.Service;
-using doctor_mangle.services;
 using doctor_mangle.utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
-namespace doctor_mangle
+namespace doctor_mangle_design_patterns
 {
     public class GameController
     {
+        // private readonly IGameService _gameService;
+        private readonly IGameService _gameService;
+        private readonly IPlayerService _playerService;
+        private readonly IParkService _parkService;
+        private readonly IBattleService _battleService;
+        private readonly IComparer<BodyPart> _partComparer;
+        private readonly string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
+
         public GameData Data { get; set; }
         public GameRepo Repo { get; set; }
-        public ArenaBattleCalculator Arena { get; set; }
-        public PlayerService _playerService { get; set; }
         public PlayerData[] AllPlayers { get; set; }
-        private IParkService _parkService { get; set; }
-        private Random RNG = new Random();
-        private string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
 
-        public GameController()
+        public GameController(
+            IGameService gameService,
+            IPlayerService playerService,
+            IParkService parkService,
+            IBattleService battleService,
+            IComparer<BodyPart> partComparer)
+        {
+            this._gameService = gameService;
+            this._playerService = playerService;
+            this._parkService = parkService;
+            this._battleService = battleService;
+            this._partComparer = partComparer;
+        }
+
+        public bool RunGame()
         {
             string textInput = "default";
             int intInput = 3;
 
+            #region FileSetup
+
             Repo = new GameRepo();
-            Arena = new ArenaBattleCalculator();
-            _playerService = new PlayerService();
-            _parkService = new ParkService();
 
             Repo.FileSetup();
             StaticUtility.TalkPause("Welcome to the Isle of Dr. Mangle.");
@@ -57,26 +73,22 @@ namespace doctor_mangle
                 }
                 Console.WriteLine("And how many contestants will you be competing against?");
                 intInput = StaticUtility.CheckInput(1, 7);
-                Data = new GameData(textInput, intInput, Repo.GetNextGameID(), RNG);
+                Data = _gameService.GetNewGameData(textInput, intInput, Repo.GetNextGameID());
+                AllPlayers = new PlayerData[Data.AiPlayers.Length];
+                AllPlayers[0] = Data.CurrentPlayer;
+                var i = 1;
+                foreach (var player in Data.AiPlayers)
+                {
+                    AllPlayers[i] = player;
+                    i++;
+                }
                 Repo.SaveGame(Data);
             }
-            AllPlayers = new PlayerData[Data.AiPlayers.Length + 1];
-            AllPlayers[0] = Data.CurrentPlayer;
-            for (int i = 0; i < Data.AiPlayers.Length; i++)
-            {
-                AllPlayers[i + 1] = Data.AiPlayers[i];
-            }
-        }
+            #endregion FileSetup
 
-        public GameController(bool forTest) {
-            Arena = new ArenaBattleCalculator();
-            _playerService = new PlayerService();
-        }
-
-        public bool RunGame()
-        {
             bool gameStatus = true;
-            int intInput;
+
+
 
             #region search
             StaticUtility.TalkPause("A new day has dawned!");
@@ -89,11 +101,12 @@ namespace doctor_mangle
                 {
                     StaticUtility.TalkPause("It is currently " + i + " o'clock. The parks close at 6.");
                     Console.WriteLine($"You are currently in the {Data.RegionText}, \r\n what will you do next?");
-                    Console.WriteLine(Data.PrintRegionOptions());
+                    Console.WriteLine(_gameService.PrintRegionOptions(Data));
                     intInput = StaticUtility.CheckInput(1, 4);
                     Data.CurrentRegion = intInput;
-                    gameStatus = ShowSearchOptions(i - 1);
-                    AISearchTurn(Data, i);
+
+                    gameStatus = PlayerSearchTurn(i - 1);
+                    _gameService.AISearchTurn(Data, i);
                     if (!gameStatus)
                     {
                         return gameStatus;
@@ -117,7 +130,7 @@ namespace doctor_mangle
                     _playerService.DumpBagIntoWorkshop(player);
                 }
                 Console.WriteLine("Bag contents added to workshop inventory.");
-                gameStatus = ShowLabOptions();
+                gameStatus = PlayerLabTurn();
                 if (!gameStatus)
                 {
                     return gameStatus;
@@ -131,7 +144,7 @@ namespace doctor_mangle
 
             try
             {
-                AIBuildTurn(Data);
+                _gameService.AIBuildTurn(Data);
             }
             catch (Exception ex)
             {
@@ -145,29 +158,29 @@ namespace doctor_mangle
             #region fight
             try
             {
-            StaticUtility.TalkPause("Welcome to the evening's entertainment!");
-            if (Data.CurrentPlayer.Monster != null && Data.CurrentPlayer.Monster.CanFight)
-            {
-                Console.WriteLine("Would you like to particpate tonight?");
-                StaticUtility.TalkPause("1 - Yes, 2 - No");
-                intInput = StaticUtility.CheckInput(1, 2);
-                if (intInput != 1)
+                StaticUtility.TalkPause("Welcome to the evening's entertainment!");
+                if (Data.CurrentPlayer.Monster != null && Data.CurrentPlayer.Monster.CanFight)
                 {
-                    StaticUtility.TalkPause("Well, maybe tomorrow then...");
-                    Console.WriteLine("Let's find you a comfortable seat.");
+                    Console.WriteLine("Would you like to particpate tonight?");
+                    StaticUtility.TalkPause("1 - Yes, 2 - No");
+                    intInput = StaticUtility.CheckInput(1, 2);
+                    if (intInput != 1)
+                    {
+                        StaticUtility.TalkPause("Well, maybe tomorrow then...");
+                        Console.WriteLine("Let's find you a comfortable seat.");
 
+                    }
+                    else
+                    {
+                        StaticUtility.TalkPause("Let the games begin!");
+                    }
                 }
                 else
                 {
-                    StaticUtility.TalkPause("Let the games begin!");
+                    StaticUtility.TalkPause("Seeing as you do not have a living, able bodied contestant...");
+                    Console.WriteLine("Let's find you a comfortable seat.");
                 }
-            }
-            else
-            {
-                StaticUtility.TalkPause("Seeing as you do not have a living, able bodied contestant...");
-                Console.WriteLine("Let's find you a comfortable seat.");
-            }
-            CalculateFights();
+                ManageBattlePhase();
             }
             catch (Exception ex)
             {
@@ -179,8 +192,8 @@ namespace doctor_mangle
             #region dayEnd
             try
             {
-                SortPlayersByWins();
-                Data.Parks = _parkService.AddParts(Data.Parks, RNG, AllPlayers.Length);
+                AllPlayers = _playerService.SortPlayersByWins(AllPlayers);
+                Data.Parks = _parkService.AddParts(Data.Parks, AllPlayers.Length);
                 Data.Parks = _parkService.HalveParts(Data.Parks);
                 Data.GameDayNumber++;
                 Repo.SaveGame(Data);
@@ -193,100 +206,7 @@ namespace doctor_mangle
             return gameStatus;
             #endregion
         }
-
-        public void AIBuildTurn(GameData data)
-        {
-            foreach (var ai in data.AiPlayers)
-            {
-                int start = 0;
-                var monst = new BodyPart[6];
-                if (ai.Monster != null)
-                {
-                    bool betterBody = false;
-                    List<BodyPart> heads = ai.WorkshopCuppoard
-                        .Where(x => x.PartType == Part.head
-                            && x.PartRarity < ai.Monster.Parts[0].PartRarity)
-                        .ToList();
-                    List<BodyPart> torsos = ai.WorkshopCuppoard
-                        .Where(x => x.PartType == Part.torso
-                            && x.PartRarity < ai.Monster.Parts[1].PartRarity).
-                        ToList();
-                    if (heads.Count > 0 || torsos.Count > 0) betterBody = true;
-
-                    if (betterBody)
-                    {
-                        data.Graveyard.Add(new MonsterGhost(ai.Monster, data.GameDayNumber));
-                        for (int i = 2; i < ai.Monster.Parts.Count; i++)
-                        {
-                            if(ai.Monster.Parts[i] != null) ai.WorkshopCuppoard.Add(ai.Monster.Parts[i]);
-                        }
-                        ai.Monster = null;
-                        ai.WorkshopCuppoard.Sort(_playerService.Comparer);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < 6; i++)
-                        {
-                            monst[i] = ai.Monster.Parts[i];
-                        }
-                        start = 2;
-                    }
-                }
-                for (int i = start; i < 6; i++)
-                {
-                    for (int j = ai.WorkshopCuppoard.Count - 1; j >= 0; j--)
-                    {
-                        BodyPart oldP = monst[i];
-                        BodyPart newP = ai.WorkshopCuppoard[j];
-                        float score = 0;
-
-                        if (newP != null)
-                        {
-                            if (oldP != null && newP.PartType == (Part)i)
-                            {
-                                score += newP.PartStats[Stat.Alacrity] - monst[i].PartStats[Stat.Alacrity];
-                                score += newP.PartStats[Stat.Strength] - monst[i].PartStats[Stat.Strength];
-                                score += newP.PartStats[Stat.Endurance] - monst[i].PartStats[Stat.Endurance];
-                                score += newP.PartStats[Stat.Technique] - monst[i].PartStats[Stat.Technique];
-                            }
-                            if ((oldP == null || score > 0f) && newP.PartType == (Part)i)
-                            {
-                                monst[i] = newP;
-                            }
-                        }
-                    }
-                }
-                if (monst[0] != null && monst[1] != null)
-                {
-                    if (monst[2] != null || monst[3] != null || monst[4] != null || monst[5] != null)
-                    {
-                        ai.Monster = new MonsterData(ai.Name + "'s Monster", monst);
-                        for (int i = ai.WorkshopCuppoard.Count - 1; i >= 0; i--)
-                        {
-                            if (ai.WorkshopCuppoard[i] != null)
-                            {
-                                _playerService.ScrapItem(ai.SpareParts, ai.WorkshopCuppoard, i);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        public void AISearchTurn(GameData gd, int round)
-        {
-            foreach (var ai in gd.AiPlayers)
-            {
-                int region = RNG.Next(1, 4);
-                if (gd.Parks[region].PartsList.Count != 0)
-                {
-                    ai.Bag[round - 1] = gd.Parks[region].PartsList.Last.Value;
-                    gd.Parks[region].PartsList.RemoveLast();
-                }
-            }
-        }
-
-        private bool ShowSearchOptions(int bagSlot)
+        private bool PlayerSearchTurn(int bagSlot)
         {
             bool status = true;
             bool searching = true;
@@ -332,7 +252,7 @@ namespace doctor_mangle
                         break;
                     case 4:
                         Console.WriteLine($"You are currently in the {Data.RegionText}, \r\n what will you do next?");
-                        Console.WriteLine(Data.PrintRegionOptions());
+                        Console.WriteLine(_gameService.PrintRegionOptions(Data));
                         intInput = StaticUtility.CheckInput(1, 4);
                         Data.CurrentRegion = intInput;
                         break;
@@ -342,121 +262,7 @@ namespace doctor_mangle
             }
             return status;
         }
-
-        private bool RunMenu()
-        {
-            bool gameStatus = true;
-
-            Console.WriteLine("Would you like to quit?  Today's progress will not be saved.");
-            Console.WriteLine("1 - Yes");
-            Console.WriteLine("2 - No");
-            int intInput = StaticUtility.CheckInput(1, 2);
-
-            if (intInput == 1)
-            {
-                gameStatus = false;
-            }
-
-            return gameStatus;
-        }
-
-        private bool ShowLabOptions()
-        {
-            bool status = true;
-            bool halt = true;
-            while (halt)
-            {
-                Console.WriteLine("0 - Menu");
-                Console.WriteLine("1 - Work on the monster");
-                Console.WriteLine("2 - Scrap unwanted parts");
-                Console.WriteLine("3 - Repair monster's parts");
-                Console.WriteLine("4 - Head out to the floor show");
-
-                int intInput = StaticUtility.CheckInput(0, 4);
-                int answer = 0;
-
-                switch (intInput)
-                {
-                    case 0:
-                        status = RunMenu();
-                        halt = status;
-                        break;
-                    case 1:
-                        if (Data.CurrentPlayer.Monster == null)
-                        {
-                            Data.CurrentPlayer.Monster = BuildMonster(true);
-                        }
-                        else
-                        {
-                            Data.CurrentPlayer.Monster = BuildMonster(false);
-                        }
-                        break;
-                    case 2:
-                        Console.WriteLine("Which Item would you like to scrap?");
-                        Console.WriteLine("0 - Exit");
-                        Console.WriteLine(_playerService.GetWorkshopItemList(Data.CurrentPlayer));
-                        answer = StaticUtility.CheckInput(0, Data.CurrentPlayer.WorkshopCuppoard.Count);
-                        if (answer != 0)
-                        {
-                            Console.WriteLine(_playerService.ScrapItem(Data.CurrentPlayer.SpareParts, Data.CurrentPlayer.WorkshopCuppoard, answer - 1));
-                        }
-                        break;
-                    case 3:
-                        if (Data.CurrentPlayer.Monster != null)
-                        {
-                            Console.WriteLine("Which Item would you like to repair?");
-                            Console.WriteLine("0 - Exit");
-                            int count = 0;
-                            foreach (var part in Data.CurrentPlayer.Monster.Parts)
-                            {
-                                count++;
-                                if (part != null)
-                                {
-                                    Console.WriteLine(count + " - " + part.PartName + ": Durability " + part.PartDurability);
-                                }
-                            }
-                            answer = StaticUtility.CheckInput(0, 7);
-                            if (answer != 0)
-                            {
-                                var part = Data.CurrentPlayer.Monster.Parts[answer - 1];
-                                if (part == null)
-                                {
-                                    Console.WriteLine("Please pick an existing part to repair that part.");
-                                }
-                                else
-                                {
-                                    var cost = _playerService.GetRepairCost(part);
-                                    if (!Data.CurrentPlayer.IsAI)
-                                    {
-                                        Console.WriteLine($"Full repair will cost {cost} {part.PartStructure} parts, but partial repair is possible.\r\n You currently have {Data.CurrentPlayer.SpareParts[part.PartStructure]}.");
-                                        Console.WriteLine("Confirm repair?");
-                                        Console.WriteLine("1 - Yes");
-                                        Console.WriteLine("2 - No");
-                                        intInput = StaticUtility.CheckInput(1, 2);
-                                        if (intInput == 1)
-                                        {
-                                            Console.WriteLine(_playerService.OrchestratePartRepair(Data.CurrentPlayer, answer - 1));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("You need a monster to repair a monster.");
-                        }
-                        break;
-                    case 4:
-                        halt = false;
-                        break;
-                    default:
-                        throw new Exception("Bad Input in GameController.ShowLabOptions");
-                }
-            }
-            return status;
-        }
-
-        private MonsterData BuildMonster(bool isNew)
+        private MonsterData PlayerBuildMonster(bool isNew)
         {
             int intInput;
             BodyPart[] table = new BodyPart[6];
@@ -474,7 +280,7 @@ namespace doctor_mangle
             }
             else
             {
-                Console.WriteLine("Would you like to end " + currentMonster.Name +"'s career?  This is permanent..." );
+                Console.WriteLine("Would you like to end " + currentMonster.Name + "'s career?  This is permanent...");
                 Console.WriteLine("1 - Yes, kill " + currentMonster.Name);
                 Console.WriteLine("2 - No, upgrade limbs");
                 intInput = StaticUtility.CheckInput(1, 2);
@@ -504,7 +310,7 @@ namespace doctor_mangle
                     }
                     Data.CurrentPlayer.Monster = null;
                     currentMonster = null;
-                    Data.CurrentPlayer.WorkshopCuppoard.Sort(_playerService.Comparer);
+                    Data.CurrentPlayer.WorkshopCuppoard.Sort(_partComparer);
                     isNew = true;
                 }
             }
@@ -686,7 +492,104 @@ namespace doctor_mangle
 
         }
 
-        private void CalculateFights()
+        private bool PlayerLabTurn()
+        {
+            bool status = true;
+            bool halt = true;
+            while (halt)
+            {
+                Console.WriteLine("0 - Menu");
+                Console.WriteLine("1 - Work on the monster");
+                Console.WriteLine("2 - Scrap unwanted parts");
+                Console.WriteLine("3 - Repair monster's parts");
+                Console.WriteLine("4 - Head out to the floor show");
+
+                int intInput = StaticUtility.CheckInput(0, 4);
+                int answer = 0;
+
+                switch (intInput)
+                {
+                    case 0:
+                        status = RunMenu();
+                        halt = status;
+                        break;
+                    case 1:
+                        if (Data.CurrentPlayer.Monster == null)
+                        {
+                            Data.CurrentPlayer.Monster = PlayerBuildMonster(true);
+                        }
+                        else
+                        {
+                            Data.CurrentPlayer.Monster = PlayerBuildMonster(false);
+                        }
+                        break;
+                    case 2:
+                        Console.WriteLine("Which Item would you like to scrap?");
+                        Console.WriteLine("0 - Exit");
+                        Console.WriteLine(_playerService.GetWorkshopItemList(Data.CurrentPlayer));
+                        answer = StaticUtility.CheckInput(0, Data.CurrentPlayer.WorkshopCuppoard.Count);
+                        if (answer != 0)
+                        {
+                            Console.WriteLine(_playerService.ScrapItem(Data.CurrentPlayer.SpareParts, Data.CurrentPlayer.WorkshopCuppoard, answer - 1));
+                        }
+                        break;
+                    case 3:
+                        if (Data.CurrentPlayer.Monster != null)
+                        {
+                            Console.WriteLine("Which Item would you like to repair?");
+                            Console.WriteLine("0 - Exit");
+                            int count = 0;
+                            foreach (var part in Data.CurrentPlayer.Monster.Parts)
+                            {
+                                count++;
+                                if (part != null)
+                                {
+                                    Console.WriteLine(count + " - " + part.PartName + ": Durability " + part.PartDurability);
+                                }
+                            }
+                            answer = StaticUtility.CheckInput(0, 7);
+                            if (answer != 0)
+                            {
+                                var part = Data.CurrentPlayer.Monster.Parts[answer - 1];
+                                if (part == null)
+                                {
+                                    Console.WriteLine("Please pick an existing part to repair that part.");
+                                }
+                                else
+                                {
+                                    var cost = _playerService.GetRepairCost(part);
+                                    if (!Data.CurrentPlayer.IsAI)
+                                    {
+                                        Console.WriteLine($"Full repair will cost {cost} {part.PartStructure} parts, but partial repair is possible.\r\n You currently have {Data.CurrentPlayer.SpareParts[part.PartStructure]}.");
+                                        Console.WriteLine("Confirm repair?");
+                                        Console.WriteLine("1 - Yes");
+                                        Console.WriteLine("2 - No");
+                                        intInput = StaticUtility.CheckInput(1, 2);
+                                        if (intInput == 1)
+                                        {
+                                            Console.WriteLine(_playerService.OrchestratePartRepair(Data.CurrentPlayer, answer - 1));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("You need a monster to repair a monster.");
+                        }
+                        break;
+                    case 4:
+                        halt = false;
+                        break;
+                    default:
+                        throw new Exception("Bad Input in GameController.ShowLabOptions");
+                }
+            }
+            return status;
+        }
+
+        // TODO: Move this to the BattleService, this should return a comprehensive script with each fight script nested inside
+        private void ManageBattlePhase()
         {
             Queue<PlayerData> fighters = new Queue<PlayerData>();
 
@@ -707,7 +610,7 @@ namespace doctor_mangle
             else if (fighters.Count == 1)
             {
                 StaticUtility.TalkPause("Only one of you managed to scrape together a monster?  No shows tonight, but rewards for the one busy beaver.");
-                Arena.GrantCash(fighters.Dequeue(), 1);
+                _battleService.GrantCash(fighters.Dequeue(), 1);
             }
             else
             {
@@ -719,14 +622,21 @@ namespace doctor_mangle
                     if (fighters.Count == 1)
                     {
                         StaticUtility.TalkPause("And we have a winner!");
-                        Arena.GrantCash(fighters.Dequeue(), round);
+                        _battleService.GrantCash(fighters.Dequeue(), round);
                     }
                     else
                     {
-                        StaticUtility.TalkPause("Draw your eyes to the arena!");
                         PlayerData left = fighters.Dequeue();
                         PlayerData right = fighters.Dequeue();
-                        fighters.Enqueue(Arena.MonsterFight(left, right));
+
+                        var result = _battleService.MonsterFight(left, right);
+                        foreach (var line in result.Text)
+                        {
+                            Console.WriteLine(line);
+                            Thread.Sleep(1000);
+                        }
+
+                        fighters.Enqueue(result.Winner);
 
                     }
                     if (fighters.Count <= Math.Ceiling(countTotal / 2))
@@ -741,30 +651,21 @@ namespace doctor_mangle
 
             //apply luck to losers
         }
-
-        public void SortPlayersByWins()
+        private bool RunMenu()
         {
-            for (int i = 0; i < AllPlayers.Length; i++)
+            bool gameStatus = true;
+
+            Console.WriteLine("Would you like to quit?  Today's progress will not be saved.");
+            Console.WriteLine("1 - Yes");
+            Console.WriteLine("2 - No");
+            int intInput = StaticUtility.CheckInput(1, 2);
+
+            if (intInput == 1)
             {
-                PlayerData left = AllPlayers[i];
-                PlayerData high = AllPlayers[i];
-                int highIndex = i;
-
-                for (int j = i + 1; j < AllPlayers.Length; j++)
-                {
-                    if (_playerService.Compare(high, AllPlayers[j]) < 0)
-                    {
-                        high = AllPlayers[j];
-                        highIndex = j;
-                    }
-                }
-
-                if (left != high)
-                {
-                    AllPlayers[highIndex] = left;
-                    AllPlayers[i] = high;
-                }
+                gameStatus = false;
             }
+
+            return gameStatus;
         }
     }
 }

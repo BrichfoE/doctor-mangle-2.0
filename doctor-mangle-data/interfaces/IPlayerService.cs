@@ -16,6 +16,7 @@ namespace doctor_mangle.interfaces
         string OrchestratePartRepair(PlayerData player, int reference);
         void DumpBagIntoWorkshop(PlayerData player);
         string GetWorkshopItemList(PlayerData player);
+        PlayerData[] SortPlayersByWins(PlayerData[] players);
         int Compare(PlayerData x, PlayerData y);
     }
 }
