@@ -61,6 +61,16 @@ namespace doctor_mangle.test.services
             parts.Add(GetPart(Part.arm, arm));
         }
 
+        private ParkData GetPark(int partLen)
+        {
+            var park = new ParkData();
+            for (int i = 0; i < partLen; i++)
+            {
+                park.PartsList.AddLast(new Head());
+            }
+            return park;
+        }
+
         [Test]
         [TestCase("test_1", 1, 1)]
         [TestCase("test_2", 4, 17)]
@@ -103,7 +113,7 @@ namespace doctor_mangle.test.services
             };
             for (int i = 0; i < aiCount; i++)
             {
-                expected.AiPlayers[i] = new PlayerData(); 
+                expected.AiPlayers[i] = new PlayerData();
             }
 
             var mRandom = new Mock<Random>();
@@ -177,19 +187,22 @@ namespace doctor_mangle.test.services
             Assert.AreEqual(expected, actual);
         }
 
-        // [Test]
-        public void AISearchTurn(GameData gd, int round)
-        {
-
-        }
-
         [Test]
-        public void AIBuildTurn()
+        [TestCase(1, 1)]
+        [TestCase(1, 2)]
+        [TestCase(0, 3)]
+        [TestCase(2, 1)]
+        [TestCase(5, 3)]
+        [TestCase(1, 0)]
+        [TestCase(5, 0)]
+        public void AISearchTurn_ReturnAssignsPartIfNotNull(int players, int parts)
         {
             // Arrange
+            var parkInt = 1;
+
             var mPlayerService = new Mock<IPlayerService>();
             var mParkService = new Mock<IParkService>();
-            var mRandom = new Mock<Random>();
+            var mRandom = TestUtils.GetMockRandom_Next(parkInt);
             var mPartComparer = new Mock<IComparer<BodyPart>>();
             var gameService = new GameService(
                 mPlayerService.Object,
@@ -197,6 +210,44 @@ namespace doctor_mangle.test.services
                 mPartComparer.Object,
                 mRandom.Object);
 
+            var playerList = new List<PlayerData>();
+            for (int i = 0; i < players; i++)
+            {
+                playerList.Add(new PlayerData() { Name = $"{i}: {parts - i-1 >= 0}" });
+            };
+            var parks = new ParkData[6];
+            parks[parkInt] = GetPark(parts);
+            var gd = new GameData()
+            {
+                Parks = parks,
+                AiPlayers = playerList.ToArray()
+            };
+
+            var expectedSum = Math.Max(parts - players, 0);
+
+            // Act
+            gameService.AISearchTurn(gd, 1);
+
+            // Assert
+            Assert.AreEqual(expectedSum, gd.Parks[parkInt].PartsList.Count);
+            foreach (var player in gd.AiPlayers)
+            {
+                if (player.Name.Contains("True"))
+                {
+                    Assert.IsNotNull(player.Bag[0]);
+                }
+                else
+                {
+                    Assert.IsNull(player.Bag[0]);
+                }
+            }
+        }
+
+        // TODO:  this needs to be broken out into different cases
+        [Test]
+        public void AIBuildTurn()
+        {
+            var gameService = GetService();
             var workshopBase = new List<BodyPart>();
             this.AddParts(workshopBase, Rarity.Legendary, Rarity.Legendary, Rarity.Legendary);
 
@@ -221,9 +272,8 @@ namespace doctor_mangle.test.services
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = tors, Name = "BetterTorso"},
                 new PlayerData(){ WorkshopCuppoard = workshopBase.ToList(), Monster = both, Name = "BetterBoth"}
             };
-            var gameData = new GameData() 
-            { 
-                Graveyard = new List<MonsterGhost>(),
+            var gameData = new GameData()
+            {
                 AiPlayers = players
             };
 

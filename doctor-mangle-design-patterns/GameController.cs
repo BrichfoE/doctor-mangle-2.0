@@ -105,7 +105,7 @@ namespace doctor_mangle_design_patterns
                     intInput = StaticUtility.CheckInput(1, 4);
                     Data.CurrentRegion = intInput;
 
-                    gameStatus = ShowSearchOptions(i - 1);
+                    gameStatus = PlayerSearchTurn(i - 1);
                     _gameService.AISearchTurn(Data, i);
                     if (!gameStatus)
                     {
@@ -130,7 +130,7 @@ namespace doctor_mangle_design_patterns
                     _playerService.DumpBagIntoWorkshop(player);
                 }
                 Console.WriteLine("Bag contents added to workshop inventory.");
-                gameStatus = ShowLabOptions();
+                gameStatus = PlayerLabTurn();
                 if (!gameStatus)
                 {
                     return gameStatus;
@@ -180,7 +180,7 @@ namespace doctor_mangle_design_patterns
                     StaticUtility.TalkPause("Seeing as you do not have a living, able bodied contestant...");
                     Console.WriteLine("Let's find you a comfortable seat.");
                 }
-                CalculateFights();
+                ManageBattlePhase();
             }
             catch (Exception ex)
             {
@@ -206,7 +206,7 @@ namespace doctor_mangle_design_patterns
             return gameStatus;
             #endregion
         }
-        private bool ShowSearchOptions(int bagSlot)
+        private bool PlayerSearchTurn(int bagSlot)
         {
             bool status = true;
             bool searching = true;
@@ -262,7 +262,7 @@ namespace doctor_mangle_design_patterns
             }
             return status;
         }
-        private MonsterData BuildMonster(bool isNew)
+        private MonsterData PlayerBuildMonster(bool isNew)
         {
             int intInput;
             BodyPart[] table = new BodyPart[6];
@@ -492,7 +492,7 @@ namespace doctor_mangle_design_patterns
 
         }
 
-        private bool ShowLabOptions()
+        private bool PlayerLabTurn()
         {
             bool status = true;
             bool halt = true;
@@ -516,11 +516,11 @@ namespace doctor_mangle_design_patterns
                     case 1:
                         if (Data.CurrentPlayer.Monster == null)
                         {
-                            Data.CurrentPlayer.Monster = BuildMonster(true);
+                            Data.CurrentPlayer.Monster = PlayerBuildMonster(true);
                         }
                         else
                         {
-                            Data.CurrentPlayer.Monster = BuildMonster(false);
+                            Data.CurrentPlayer.Monster = PlayerBuildMonster(false);
                         }
                         break;
                     case 2:
@@ -587,7 +587,9 @@ namespace doctor_mangle_design_patterns
             }
             return status;
         }
-        private void CalculateFights()
+
+        // TODO: Move this to the BattleService, this should return a comprehensive script with each fight script nested inside
+        private void ManageBattlePhase()
         {
             Queue<PlayerData> fighters = new Queue<PlayerData>();
 
