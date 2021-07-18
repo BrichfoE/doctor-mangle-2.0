@@ -1,18 +1,20 @@
-﻿using doctor_mangle.models;
+﻿using doctor_mangle.interfaces;
+using doctor_mangle.models;
 using doctor_mangle.utility;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Configuration;
 
-namespace doctor_mangle
+namespace doctor_mangle_design_patterns
 {
-    public class GameRepo
+    public class GameRepo : IGameRepository
     {
-        private readonly string filePath = "C:\\git\\DocMangle\\DrMangle\\bin\\Debug\\Data\\";
+        private readonly string filePath = ConfigurationManager.AppSettings["filepath"];
         private int exceptionCount;
-        public Dictionary<string, int> gameIndex;
+        private Dictionary<string, int> gameIndex = new Dictionary<string, int>();
 
         public void FileSetup()
         {
@@ -20,21 +22,16 @@ namespace doctor_mangle
             {
                 Directory.CreateDirectory(filePath);
             }
-            if (!Directory.Exists(filePath + "Save\\"))
+            if (!Directory.Exists($"{filePath}\\Errors"))
             {
-                Directory.CreateDirectory(filePath + "Save\\");
-            }
-            if (!Directory.Exists(filePath + "Errors\\"))
-            {
-                Directory.CreateDirectory(filePath + "Errors\\");
+                Directory.CreateDirectory(filePath);
             }
 
-            string indexFile = Path.Combine(filePath, "Save\\Index.txt");
+            string indexFile = Path.Combine(filePath, "Index.txt");
             if (!File.Exists(indexFile))
             {
                 var file = File.Create(indexFile);
                 file.Dispose();
-                gameIndex = new Dictionary<string, int>();
                 gameIndex.Add("_placeholder", 0);
             }
             else
@@ -46,7 +43,7 @@ namespace doctor_mangle
 
         public void SaveGame(GameData gd)
         {
-            string saveFile = Path.Combine(filePath, "Save\\dat_" + gd.GameDataId.ToString() + ".txt");
+            string saveFile = Path.Combine(filePath, $"dat_{gd.GameDataId}.txt");
             if (!File.Exists(saveFile))
             {
                 var gameFile = File.Create(saveFile);
@@ -58,12 +55,17 @@ namespace doctor_mangle
                 if (!gameIndex.ContainsKey(gd.GameName))
                 {
                     gameIndex.Add(gd.GameName, gd.GameDataId);
-                    File.WriteAllText(Path.Combine(filePath, "Save\\Index.txt"), JsonConvert.SerializeObject(gameIndex, Formatting.Indented));
+                    File.WriteAllText(Path.Combine(filePath, "Index.txt"), JsonConvert.SerializeObject(gameIndex, Formatting.Indented));
                 }
             }
 
             File.WriteAllText(saveFile, JsonConvert.SerializeObject(gd, Formatting.Indented));
             Console.WriteLine("Game Saved");
+        }
+
+        public bool CanLoadGames()
+        {
+            return gameIndex.Count > 0;
         }
 
         public GameData LoadGame()
@@ -75,7 +77,7 @@ namespace doctor_mangle
             Console.WriteLine("Would you like to load a previous game?");
             Console.WriteLine("0 - Start New Game");
             Console.WriteLine("1 - Load a Previous Game");
-            intInput = StaticUtility.CheckInput(0, 1);
+            intInput = StaticConsoleHelper.CheckInput(0, 1);
             if (intInput == 0)
             {
                 return null;
@@ -99,7 +101,7 @@ namespace doctor_mangle
                     Console.WriteLine("Invalid game name, please enter the name of a game.");
                 }
             }
-            string saveFile = Path.Combine(filePath, "Save\\dat_" + gameId.ToString() + ".txt");
+            string saveFile = Path.Combine(filePath, "dat_" + gameId.ToString() + ".txt");
 
             if (File.Exists(saveFile))
             {
@@ -127,6 +129,13 @@ namespace doctor_mangle
             return GameID;
         }
 
+        public int GetGameIdFromName(string name)
+        {
+            return gameIndex.ContainsKey(name)
+                ? gameIndex[name]
+                : -1;
+        }
+
         public void LogException(GameData gd, string exceptionText, Exception ex, bool willClose)
         {
             exceptionCount += 1;
@@ -148,9 +157,9 @@ namespace doctor_mangle
             sw.WriteLine(JsonConvert.SerializeObject(gd, Formatting.Indented));
 
             if (willClose)
-                StaticUtility.TalkPause("Something has gone wrong, the game will now close and unsaved progress will be lost.");
+                StaticConsoleHelper.TalkPause("Something has gone wrong, the game will now close and unsaved progress will be lost.");
             else
-                StaticUtility.TalkPause("Error Logged, section skipped.");
+                StaticConsoleHelper.TalkPause("Error Logged, section skipped.");
         }
     }
 }

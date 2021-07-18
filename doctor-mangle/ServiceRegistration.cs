@@ -9,7 +9,7 @@ namespace doctor_mangle
         public static void ConfigureServices(IServiceCollection services)
         {
             services
-                .AddSingleton<GameService>()
+                .AddSingleton<IGameService, GameService>()
                 .AddTransient<IPlayerService, PlayerService>()
                 .AddTransient<IParkService, ParkService>()
                 .AddTransient<IBattleService, BattleService>();

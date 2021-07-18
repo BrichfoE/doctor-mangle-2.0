@@ -21,6 +21,15 @@ namespace doctor_mangle.constants
         Rock = 5
     }
 
+    public enum Component
+    {
+        Ether = 1,
+        Meat = 2,
+        Biomatter = 3,
+        Components = 4,
+        Rocks = 5
+    }
+
     public enum Rarity
     {
         Common = 1,
@@ -41,14 +50,6 @@ namespace doctor_mangle.constants
 
     public static class StaticReference
     {
-        public static string[] componentList = new string[5]
-        {
-                  "Ether"
-                , "Meat"
-                , "Biomatter"
-                , "Components"
-                , "Rocks"
-        };
 
         public static Dictionary<Rarity, int> RarityMultiplier = new Dictionary<Rarity, int>()
         {
@@ -78,8 +79,8 @@ namespace doctor_mangle.constants
             {Structure.Human, Stat.Technique}
         };
 
-        public static string[] adjectives = new string[11] { "Cool", "Nice", "Mad", "Helpful", "Thin", "Dirty", "Slick", "Ugly", "Super", "Octogenarian", "Beefy" };
-        public static string[] names = new string[11] { "Luke", "Matilda", "Martha", "Hannah", "Pete", "Harry", "Rick", "Veronica", "Susan", "Maynard", "Bobby" };
+        public static string[] adjectives = new string[] { "Cool", "Nice", "Mad", "Helpful", "Thin", "Dirty", "Slick", "Ugly", "Super", "Octogenarian", "Beefy" };
+        public static string[] names = new string[] { "Luke", "Matilda", "Martha", "Hannah", "Pete", "Harry", "Rick", "Veronica", "Susan", "Maynard", "Bobby" };
     }
 }
 

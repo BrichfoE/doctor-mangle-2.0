@@ -1,5 +1,4 @@
-﻿using doctor_mangle;
-using doctor_mangle.constants;
+﻿using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
@@ -14,30 +13,31 @@ namespace doctor_mangle_design_patterns
 {
     public class GameController
     {
-        // private readonly IGameService _gameService;
         private readonly IGameService _gameService;
         private readonly IPlayerService _playerService;
         private readonly IParkService _parkService;
         private readonly IBattleService _battleService;
         private readonly IComparer<BodyPart> _partComparer;
+        private readonly IGameRepository _gameRepo;
         private readonly string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
 
         public GameData Data { get; set; }
-        public GameRepo Repo { get; set; }
-        public PlayerData[] AllPlayers { get; set; }
+        private PlayerData[] AllPlayers;
 
         public GameController(
             IGameService gameService,
             IPlayerService playerService,
             IParkService parkService,
             IBattleService battleService,
-            IComparer<BodyPart> partComparer)
+            IComparer<BodyPart> partComparer,
+            IGameRepository gameRepo)
         {
             this._gameService = gameService;
             this._playerService = playerService;
             this._parkService = parkService;
             this._battleService = battleService;
             this._partComparer = partComparer;
+            this._gameRepo = gameRepo;
         }
 
         public bool RunGame()
@@ -47,13 +47,11 @@ namespace doctor_mangle_design_patterns
 
             #region FileSetup
 
-            Repo = new GameRepo();
-
-            Repo.FileSetup();
-            StaticUtility.TalkPause("Welcome to the Isle of Dr. Mangle.");
-            if (Repo.gameIndex.Count > 1)
+            _gameRepo.FileSetup();
+            StaticConsoleHelper.TalkPause("Welcome to the Isle of Dr. Mangle.");
+            if (_gameRepo.CanLoadGames())
             {
-                Data = Repo.LoadGame();
+                Data = _gameRepo.LoadGame();
             }
             if (Data == null)
             {
@@ -62,7 +60,7 @@ namespace doctor_mangle_design_patterns
                 {
                     Console.WriteLine("Please enter a name for your game data:");
                     textInput = Console.ReadLine();
-                    if (Repo.gameIndex.ContainsKey(textInput))
+                    if (_gameRepo.GetGameIdFromName(textInput) != -1)
                     {
                         Console.WriteLine("A game by that name already exists.");
                     }
@@ -72,8 +70,8 @@ namespace doctor_mangle_design_patterns
                     }
                 }
                 Console.WriteLine("And how many contestants will you be competing against?");
-                intInput = StaticUtility.CheckInput(1, 7);
-                Data = _gameService.GetNewGameData(textInput, intInput, Repo.GetNextGameID());
+                intInput = StaticConsoleHelper.CheckInput(1, 7);
+                Data = _gameService.GetNewGameData(textInput, intInput, _gameRepo.GetNextGameID());
                 AllPlayers = new PlayerData[Data.AiPlayers.Length];
                 AllPlayers[0] = Data.CurrentPlayer;
                 var i = 1;
@@ -82,7 +80,7 @@ namespace doctor_mangle_design_patterns
                     AllPlayers[i] = player;
                     i++;
                 }
-                Repo.SaveGame(Data);
+                _gameRepo.SaveGame(Data);
             }
             #endregion FileSetup
 
@@ -91,18 +89,18 @@ namespace doctor_mangle_design_patterns
 
 
             #region search
-            StaticUtility.TalkPause("A new day has dawned!");
-            StaticUtility.TalkPause("The parks will be open for 5 hours...");
-            StaticUtility.TalkPause("You will then have one more hour in your labs before the evening's entertainment.");
+            StaticConsoleHelper.TalkPause("A new day has dawned!");
+            StaticConsoleHelper.TalkPause("The parks will be open for 5 hours...");
+            StaticConsoleHelper.TalkPause("You will then have one more hour in your labs before the evening's entertainment.");
 
             for (int i = 1; i < 6; i++)
             {
                 try
                 {
-                    StaticUtility.TalkPause("It is currently " + i + " o'clock. The parks close at 6.");
+                    StaticConsoleHelper.TalkPause("It is currently " + i + " o'clock. The parks close at 6.");
                     Console.WriteLine($"You are currently in the {Data.RegionText}, \r\n what will you do next?");
                     Console.WriteLine(_gameService.PrintRegionOptions(Data));
-                    intInput = StaticUtility.CheckInput(1, 4);
+                    intInput = StaticConsoleHelper.CheckInput(1, 4);
                     Data.CurrentRegion = intInput;
 
                     gameStatus = PlayerSearchTurn(i - 1);
@@ -115,7 +113,7 @@ namespace doctor_mangle_design_patterns
                 catch (System.Exception ex)
                 {
                     int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                    Repo.LogException(Data, $"Search Phase exception {currentFile} line {currentLine}", ex, false);
+                    _gameRepo.LogException(Data, $"Search Phase exception {currentFile} line {currentLine}", ex, false);
                 }
             }
             #endregion
@@ -123,7 +121,7 @@ namespace doctor_mangle_design_patterns
             #region build
             try
             {
-                StaticUtility.TalkPause("It is now 6 o'clock. Return to your lab and prepare for the floorshow at 7.");
+                StaticConsoleHelper.TalkPause("It is now 6 o'clock. Return to your lab and prepare for the floorshow at 7.");
                 Data.CurrentRegion = 0;
                 foreach (var player in AllPlayers)
                 {
@@ -139,7 +137,7 @@ namespace doctor_mangle_design_patterns
             catch (System.Exception ex)
             {
                 int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                Repo.LogException(Data, $"Player Build Phase exception {currentFile} line {currentLine}\n", ex, false);
+                _gameRepo.LogException(Data, $"Player Build Phase exception {currentFile} line {currentLine}\n", ex, false);
             }
 
             try
@@ -149,7 +147,7 @@ namespace doctor_mangle_design_patterns
             catch (Exception ex)
             {
                 int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                Repo.LogException(Data, $"AI Build Phase exception {currentFile} line {currentLine}\n", ex, false);
+                _gameRepo.LogException(Data, $"AI Build Phase exception {currentFile} line {currentLine}\n", ex, false);
             }
 
 
@@ -158,26 +156,26 @@ namespace doctor_mangle_design_patterns
             #region fight
             try
             {
-                StaticUtility.TalkPause("Welcome to the evening's entertainment!");
+                StaticConsoleHelper.TalkPause("Welcome to the evening's entertainment!");
                 if (Data.CurrentPlayer.Monster != null && Data.CurrentPlayer.Monster.CanFight)
                 {
                     Console.WriteLine("Would you like to particpate tonight?");
-                    StaticUtility.TalkPause("1 - Yes, 2 - No");
-                    intInput = StaticUtility.CheckInput(1, 2);
+                    StaticConsoleHelper.TalkPause("1 - Yes, 2 - No");
+                    intInput = StaticConsoleHelper.CheckInput(1, 2);
                     if (intInput != 1)
                     {
-                        StaticUtility.TalkPause("Well, maybe tomorrow then...");
+                        StaticConsoleHelper.TalkPause("Well, maybe tomorrow then...");
                         Console.WriteLine("Let's find you a comfortable seat.");
 
                     }
                     else
                     {
-                        StaticUtility.TalkPause("Let the games begin!");
+                        StaticConsoleHelper.TalkPause("Let the games begin!");
                     }
                 }
                 else
                 {
-                    StaticUtility.TalkPause("Seeing as you do not have a living, able bodied contestant...");
+                    StaticConsoleHelper.TalkPause("Seeing as you do not have a living, able bodied contestant...");
                     Console.WriteLine("Let's find you a comfortable seat.");
                 }
                 ManageBattlePhase();
@@ -185,7 +183,7 @@ namespace doctor_mangle_design_patterns
             catch (Exception ex)
             {
                 int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                Repo.LogException(Data, $"Fighting Phase exception {currentFile} line {currentLine}\n", ex, false);
+                _gameRepo.LogException(Data, $"Fighting Phase exception {currentFile} line {currentLine}\n", ex, false);
             }
             #endregion
 
@@ -196,12 +194,12 @@ namespace doctor_mangle_design_patterns
                 Data.Parks = _parkService.AddParts(Data.Parks, AllPlayers.Length);
                 Data.Parks = _parkService.HalveParts(Data.Parks);
                 Data.GameDayNumber++;
-                Repo.SaveGame(Data);
+                _gameRepo.SaveGame(Data);
             }
             catch (Exception ex)
             {
                 int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                Repo.LogException(Data, $"End of Day Phaseexception {currentFile} line {currentLine}\n", ex, false);
+                _gameRepo.LogException(Data, $"End of Day Phaseexception {currentFile} line {currentLine}\n", ex, false);
             }
             return gameStatus;
             #endregion
@@ -221,7 +219,7 @@ namespace doctor_mangle_design_patterns
                 Console.WriteLine("3 - Look in bag");
                 Console.WriteLine("4 - Go to another region");
 
-                intInput = StaticUtility.CheckInput(0, 4);
+                intInput = StaticConsoleHelper.CheckInput(0, 4);
 
                 switch (intInput)
                 {
@@ -253,7 +251,7 @@ namespace doctor_mangle_design_patterns
                     case 4:
                         Console.WriteLine($"You are currently in the {Data.RegionText}, \r\n what will you do next?");
                         Console.WriteLine(_gameService.PrintRegionOptions(Data));
-                        intInput = StaticUtility.CheckInput(1, 4);
+                        intInput = StaticConsoleHelper.CheckInput(1, 4);
                         Data.CurrentRegion = intInput;
                         break;
                     default:
@@ -283,7 +281,7 @@ namespace doctor_mangle_design_patterns
                 Console.WriteLine("Would you like to end " + currentMonster.Name + "'s career?  This is permanent...");
                 Console.WriteLine("1 - Yes, kill " + currentMonster.Name);
                 Console.WriteLine("2 - No, upgrade limbs");
-                intInput = StaticUtility.CheckInput(1, 2);
+                intInput = StaticConsoleHelper.CheckInput(1, 2);
                 if (intInput == 2)
                 {
                     loopStart = 2;
@@ -362,13 +360,13 @@ namespace doctor_mangle_design_patterns
                     if (isNew == false && currentMonster.Parts[i] != null)
                     {
                         table[i] = currentMonster.Parts[i];
-                        StaticUtility.TalkPause("Currently " + currentMonster.Name + " has the below " + type);
+                        StaticConsoleHelper.TalkPause("Currently " + currentMonster.Name + " has the below " + type);
                         Console.WriteLine(currentMonster.Parts[i].PartName);
                         Console.WriteLine("Durability: " + currentMonster.Parts[i].PartDurability);
                         Console.WriteLine("Alacrity: " + currentMonster.Parts[i].PartStats[Stat.Alacrity]);
                         Console.WriteLine("Strenght: " + currentMonster.Parts[i].PartStats[Stat.Strength]);
                         Console.WriteLine("Endurance: " + currentMonster.Parts[i].PartStats[Stat.Endurance]);
-                        StaticUtility.TalkPause("Technique: " + currentMonster.Parts[i].PartStats[Stat.Technique]);
+                        StaticConsoleHelper.TalkPause("Technique: " + currentMonster.Parts[i].PartStats[Stat.Technique]);
                     }
 
                     Console.WriteLine("Workshop Items:");
@@ -381,7 +379,7 @@ namespace doctor_mangle_design_patterns
                     }
 
                     Console.WriteLine("Please choose a " + type + ":");
-                    intInput = StaticUtility.CheckInput(0, StaticUtility.NonNullCount(workshopCopy));
+                    intInput = StaticConsoleHelper.CheckInput(0, StaticUtility.NonNullCount(workshopCopy));
 
                     if (intInput == 0)
                     {
@@ -402,13 +400,13 @@ namespace doctor_mangle_design_patterns
                         Console.WriteLine("Alacrity: " + chosenPart.PartStats[Stat.Alacrity]);
                         Console.WriteLine("Strenght: " + chosenPart.PartStats[Stat.Strength]);
                         Console.WriteLine("Endurance: " + chosenPart.PartStats[Stat.Endurance]);
-                        StaticUtility.TalkPause("Technique: " + chosenPart.PartStats[Stat.Technique]);
+                        StaticConsoleHelper.TalkPause("Technique: " + chosenPart.PartStats[Stat.Technique]);
                         Console.WriteLine("Use this part?");
                         Console.WriteLine("1 - Yes");
                         Console.WriteLine("2 - No");
                         Console.WriteLine("3 - Skip part");
                         Console.WriteLine("4 - Leave Table");
-                        int intInput2 = StaticUtility.CheckInput(1, 4);
+                        int intInput2 = StaticConsoleHelper.CheckInput(1, 4);
 
                         switch (intInput2)
                         {
@@ -446,7 +444,7 @@ namespace doctor_mangle_design_patterns
             {
                 MonsterData newMonster = new MonsterData(null, table);
 
-                StaticUtility.TalkPause("This is your monster...");
+                StaticConsoleHelper.TalkPause("This is your monster...");
                 foreach (var part in table)
                 {
                     if (part != null)
@@ -462,7 +460,7 @@ namespace doctor_mangle_design_patterns
                 }
                 Console.WriteLine("Would you like to keep this monster?");
                 Console.WriteLine("1 - Yes, 2 - No");
-                intInput = StaticUtility.CheckInput(1, 2);
+                intInput = StaticConsoleHelper.CheckInput(1, 2);
                 if (intInput == 1)
                 {
                     if (isNew)
@@ -504,7 +502,7 @@ namespace doctor_mangle_design_patterns
                 Console.WriteLine("3 - Repair monster's parts");
                 Console.WriteLine("4 - Head out to the floor show");
 
-                int intInput = StaticUtility.CheckInput(0, 4);
+                int intInput = StaticConsoleHelper.CheckInput(0, 4);
                 int answer = 0;
 
                 switch (intInput)
@@ -527,7 +525,7 @@ namespace doctor_mangle_design_patterns
                         Console.WriteLine("Which Item would you like to scrap?");
                         Console.WriteLine("0 - Exit");
                         Console.WriteLine(_playerService.GetWorkshopItemList(Data.CurrentPlayer));
-                        answer = StaticUtility.CheckInput(0, Data.CurrentPlayer.WorkshopCuppoard.Count);
+                        answer = StaticConsoleHelper.CheckInput(0, Data.CurrentPlayer.WorkshopCuppoard.Count);
                         if (answer != 0)
                         {
                             Console.WriteLine(_playerService.ScrapItem(Data.CurrentPlayer.SpareParts, Data.CurrentPlayer.WorkshopCuppoard, answer - 1));
@@ -547,7 +545,7 @@ namespace doctor_mangle_design_patterns
                                     Console.WriteLine(count + " - " + part.PartName + ": Durability " + part.PartDurability);
                                 }
                             }
-                            answer = StaticUtility.CheckInput(0, 7);
+                            answer = StaticConsoleHelper.CheckInput(0, 7);
                             if (answer != 0)
                             {
                                 var part = Data.CurrentPlayer.Monster.Parts[answer - 1];
@@ -564,7 +562,7 @@ namespace doctor_mangle_design_patterns
                                         Console.WriteLine("Confirm repair?");
                                         Console.WriteLine("1 - Yes");
                                         Console.WriteLine("2 - No");
-                                        intInput = StaticUtility.CheckInput(1, 2);
+                                        intInput = StaticConsoleHelper.CheckInput(1, 2);
                                         if (intInput == 1)
                                         {
                                             Console.WriteLine(_playerService.OrchestratePartRepair(Data.CurrentPlayer, answer - 1));
@@ -605,11 +603,11 @@ namespace doctor_mangle_design_patterns
             //pair off
             if (fighters.Count == 0)
             {
-                StaticUtility.TalkPause("There will be no show tonight!  Better luck gathering tomorrow");
+                StaticConsoleHelper.TalkPause("There will be no show tonight!  Better luck gathering tomorrow");
             }
             else if (fighters.Count == 1)
             {
-                StaticUtility.TalkPause("Only one of you managed to scrape together a monster?  No shows tonight, but rewards for the one busy beaver.");
+                StaticConsoleHelper.TalkPause("Only one of you managed to scrape together a monster?  No shows tonight, but rewards for the one busy beaver.");
                 _battleService.GrantCash(fighters.Dequeue(), 1);
             }
             else
@@ -621,7 +619,7 @@ namespace doctor_mangle_design_patterns
                     int round = 0;
                     if (fighters.Count == 1)
                     {
-                        StaticUtility.TalkPause("And we have a winner!");
+                        StaticConsoleHelper.TalkPause("And we have a winner!");
                         _battleService.GrantCash(fighters.Dequeue(), round);
                     }
                     else
@@ -658,7 +656,7 @@ namespace doctor_mangle_design_patterns
             Console.WriteLine("Would you like to quit?  Today's progress will not be saved.");
             Console.WriteLine("1 - Yes");
             Console.WriteLine("2 - No");
-            int intInput = StaticUtility.CheckInput(1, 2);
+            int intInput = StaticConsoleHelper.CheckInput(1, 2);
 
             if (intInput == 1)
             {
