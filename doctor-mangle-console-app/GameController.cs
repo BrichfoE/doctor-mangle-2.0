@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace doctor_mangle_design_patterns
+namespace doctor_mangle_console_app
 {
     public class GameController
     {
@@ -40,13 +40,8 @@ namespace doctor_mangle_design_patterns
             this._gameRepo = gameRepo;
         }
 
-        public bool RunGame()
+        public void Init()
         {
-            string textInput = "default";
-            int intInput = 3;
-
-            #region FileSetup
-
             _gameRepo.FileSetup();
             StaticConsoleHelper.TalkPause("Welcome to the Isle of Dr. Mangle.");
             if (_gameRepo.CanLoadGames())
@@ -55,6 +50,7 @@ namespace doctor_mangle_design_patterns
             }
             if (Data == null)
             {
+                string textInput = "default";
                 bool halt = true;
                 while (halt)
                 {
@@ -70,9 +66,9 @@ namespace doctor_mangle_design_patterns
                     }
                 }
                 Console.WriteLine("And how many contestants will you be competing against?");
-                intInput = StaticConsoleHelper.CheckInput(1, 7);
+                var intInput = StaticConsoleHelper.CheckInput(1, 7);
                 Data = _gameService.GetNewGameData(textInput, intInput, _gameRepo.GetNextGameID());
-                AllPlayers = new PlayerData[Data.AiPlayers.Length];
+                AllPlayers = new PlayerData[Data.AiPlayers.Length + 1];
                 AllPlayers[0] = Data.CurrentPlayer;
                 var i = 1;
                 foreach (var player in Data.AiPlayers)
@@ -82,11 +78,12 @@ namespace doctor_mangle_design_patterns
                 }
                 _gameRepo.SaveGame(Data);
             }
-            #endregion FileSetup
+        }
 
+        public bool RunGame()
+        {
+            var intInput = 0;
             bool gameStatus = true;
-
-
 
             #region search
             StaticConsoleHelper.TalkPause("A new day has dawned!");

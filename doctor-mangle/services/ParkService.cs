@@ -1,8 +1,10 @@
 ﻿using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models.factories;
+using doctor_mangle.models.parts;
 using doctor_mangle_data.models;
 using System;
+using System.Linq;
 
 namespace doctor_mangle.services
 {
@@ -23,6 +25,66 @@ namespace doctor_mangle.services
             _locations[4] = new ParkData() { ParkName = "Rockyard", ParkPart = Structure.Rock };
             _locations[5] = new ParkData() { ParkName = "Arena" };
             return _locations;
+        }
+
+        public void MovePartsForSerilaization(ParkData park)
+        {
+            park._heads = park.PartsList
+                .Where(x => x.GetType() == typeof(Head))
+                .Select(y => new Head(y))
+                .ToList();
+
+            park._torsos = park.PartsList
+                .Where(x => x.GetType() == typeof(Torso))
+                .Select(y => new Torso(y))
+                .ToList();
+
+            park._arms = park.PartsList
+                .Where(x => x.GetType() == typeof(Arm))
+                .Select(y => new Arm(y))
+                .ToList();
+
+            park._legs = park.PartsList
+                .Where(x => x.GetType() == typeof(Leg))
+                .Select(y => new Leg(y))
+                .ToList();
+
+            park.PartsList.Clear();
+        }
+        public void MovePartsAfterDeserilaization(ParkData park)
+        {
+            var sum = park._arms.Count
+                + park._torsos.Count
+                + park._heads.Count
+                + park._legs.Count;
+            while (sum > 0)
+            {
+                var prt = _rng.Next(1, 4);
+                if (prt == 1 && park._arms.Count > 0)
+                {
+                    park.PartsList.AddLast(park._arms[0]);
+                    park._arms.RemoveAt(0);
+                    sum--;
+                }
+                else if (prt == 2 && park._torsos.Count > 0)
+                {
+                    park.PartsList.AddLast(park._torsos[0]);
+                    park._torsos.RemoveAt(0);
+                    sum--;
+                }
+                else if (prt == 3 && park._heads.Count > 0)
+                {
+                    park.PartsList.AddLast(park._heads[0]);
+                    park._heads.RemoveAt(0);
+                    sum--;
+                }
+                else if (prt == 4 && park._legs.Count > 0)
+                {
+                    park.PartsList.AddLast(park._legs[0]);
+                    park._legs.RemoveAt(0);
+                    sum--;
+                }
+            }
         }
 
         public ParkData[] AddParts(ParkData[] locations, int playerCount)
@@ -74,6 +136,5 @@ namespace doctor_mangle.services
             }
             return locations;
         }
-
     }
 }

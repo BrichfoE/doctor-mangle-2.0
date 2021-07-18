@@ -1,20 +1,27 @@
 ﻿using doctor_mangle.interfaces;
 using doctor_mangle.models;
-using doctor_mangle.utility;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
-using System.Configuration;
 
-namespace doctor_mangle_design_patterns
+namespace doctor_mangle_console_app
 {
     public class GameRepo : IGameRepository
     {
         private readonly string filePath = ConfigurationManager.AppSettings["filepath"];
+        private readonly IParkService _parkService;
+        private readonly IMonsterService _monsterService;
         private int exceptionCount;
         private Dictionary<string, int> gameIndex = new Dictionary<string, int>();
+
+        public GameRepo(IParkService parkService, IMonsterService monsterService)
+        {
+            this._parkService = parkService;
+            this._monsterService = monsterService;
+        }
 
         public void FileSetup()
         {
@@ -24,7 +31,7 @@ namespace doctor_mangle_design_patterns
             }
             if (!Directory.Exists($"{filePath}\\Errors"))
             {
-                Directory.CreateDirectory(filePath);
+                Directory.CreateDirectory(filePath+"\\Errors");
             }
 
             string indexFile = Path.Combine(filePath, "Index.txt");
@@ -32,17 +39,29 @@ namespace doctor_mangle_design_patterns
             {
                 var file = File.Create(indexFile);
                 file.Dispose();
-                gameIndex.Add("_placeholder", 0);
+                this.gameIndex = new Dictionary<string, int>();
+                this.gameIndex.Add("_placeholder", 0);
+                File.WriteAllText(Path.Combine(filePath, "Index.txt"), JsonConvert.SerializeObject(gameIndex, Formatting.Indented));
             }
             else
             {
                 var text = File.ReadAllText(indexFile);
-                gameIndex = JsonConvert.DeserializeObject<Dictionary<string, int>>(text);
+                this.gameIndex = JsonConvert.DeserializeObject<Dictionary<string, int>>(text);
             }
         }
 
         public void SaveGame(GameData gd)
         {
+            foreach (var park in gd.Parks)
+            {
+                _parkService.MovePartsForSerilaization(park);
+            }
+            _monsterService.MovePartsForSerilaization(gd.CurrentPlayer.Monster);
+            foreach (var player in gd.AiPlayers)
+            {
+                _monsterService.MovePartsForSerilaization(player.Monster);
+            }
+
             string saveFile = Path.Combine(filePath, $"dat_{gd.GameDataId}.txt");
             if (!File.Exists(saveFile))
             {
@@ -61,11 +80,14 @@ namespace doctor_mangle_design_patterns
 
             File.WriteAllText(saveFile, JsonConvert.SerializeObject(gd, Formatting.Indented));
             Console.WriteLine("Game Saved");
+            this.MovePartsAfterDeserialization(gd);
         }
 
         public bool CanLoadGames()
         {
-            return gameIndex.Count > 0;
+            // check if there's a placeholder in the index that would skew results
+            var expected = gameIndex["_placeholder"] == 0 ? 1 : 0;
+            return gameIndex.Count > expected;
         }
 
         public GameData LoadGame()
@@ -88,7 +110,10 @@ namespace doctor_mangle_design_patterns
                 Console.WriteLine("Please enter the name of the game you would like to load.");
                 foreach (var game in gameIndex)
                 {
-                    Console.WriteLine(game.Value + " - " + game.Key);
+                    if (game.Key != "_placeholder" && game.Value != 0)
+                    {
+                        Console.WriteLine(game.Value + " - " + game.Key);
+                    }
                 }
                 string gameName = Console.ReadLine();
 
@@ -109,13 +134,13 @@ namespace doctor_mangle_design_patterns
                 data = JsonConvert.DeserializeObject<GameData>(fileText);
                 Console.WriteLine("Load successful!");
             }
-
+            this.MovePartsAfterDeserialization(data);
             return data;
         }
 
         public int GetNextGameID()
         {
-            int GameID = 1;
+            int GameID;
 
             if (gameIndex == null)
             {
@@ -160,6 +185,19 @@ namespace doctor_mangle_design_patterns
                 StaticConsoleHelper.TalkPause("Something has gone wrong, the game will now close and unsaved progress will be lost.");
             else
                 StaticConsoleHelper.TalkPause("Error Logged, section skipped.");
+        }
+
+        private void MovePartsAfterDeserialization(GameData gd)
+        {
+            foreach (var park in gd.Parks)
+            {
+                _parkService.MovePartsAfterDeserilaization(park);
+            }
+            _monsterService.MovePartsAfterDeserilaization(gd.CurrentPlayer.Monster);
+            foreach (var player in gd.AiPlayers)
+            {
+                _monsterService.MovePartsAfterDeserilaization(player.Monster);
+            }
         }
     }
 }

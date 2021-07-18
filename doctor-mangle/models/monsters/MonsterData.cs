@@ -16,6 +16,11 @@ namespace doctor_mangle.models.monsters
                 { Stat.Endurance, 1f },
                 { Stat.Technique, 1f }
             };
+        // private stores for serilaization
+        internal List<Head> _heads;
+        internal List<Torso> _torsos;
+        internal List<Arm> _arms;
+        internal List<Leg> _legs;
         public List<BodyPart> Parts => _parts;
         public List<BodyPart> Heads => _parts.Where(x => x.GetType() == typeof(Head)).ToList();
         public List<BodyPart> Torsos => _parts.Where(x => x.GetType() == typeof(Torso)).ToList();

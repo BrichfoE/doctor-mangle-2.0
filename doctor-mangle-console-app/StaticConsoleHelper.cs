@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace doctor_mangle_design_patterns
+namespace doctor_mangle_console_app
 {
     public class StaticConsoleHelper
     {

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 
-namespace doctor_mangle_design_patterns
+namespace doctor_mangle_console_app
 {
     public class Program
     {
@@ -25,22 +25,34 @@ namespace doctor_mangle_design_patterns
         {
             return Host.CreateDefaultBuilder(args)
                 .ConfigureServices(services => {
-                    services
-                .AddTransient<IPlayerService, PlayerService>()
-                .AddTransient<IParkService, ParkService>()
-                .AddTransient<IBattleService, BattleService>()
-                .AddScoped<IGameService, GameService>()
-                .AddTransient<IComparer<BodyPart>, PartComparer>()
-                .AddSingleton<IGameRepository, GameRepo>()
-                .AddSingleton<Program>()
-                .AddSingleton<Random>()
-                .AddSingleton<GameController>();
+                    _ = services.AddScoped<IGameService, GameService>()
+                        .AddTransient<IPlayerService, PlayerService>()
+                        .AddTransient<IParkService, ParkService>()
+                        .AddTransient<IBattleService, BattleService>()
+                        .AddTransient<IMonsterService, MonsterService>()
+                        .AddTransient<IMonsterService, MonsterService>()
+                        .AddTransient<IComparer<BodyPart>, PartComparer>()
+                        .AddSingleton<IGameRepository, GameRepo>()
+                        .AddSingleton<Program>()
+                        .AddSingleton<Random>()
+                        .AddSingleton<GameController>();
                 });
         }
 
         public void Run()
         {
             bool activeGame = true;
+            try
+            {
+                _gc.Init();
+            }
+            catch (Exception ex)
+            {
+                string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
+                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
+                _gr.LogException(_gc.Data, $"General exception {currentFile} line {currentLine}", ex, true);
+                activeGame = false;
+            }
 
             while (activeGame)
             {
@@ -48,7 +60,7 @@ namespace doctor_mangle_design_patterns
                 {
                     activeGame = _gc.RunGame();
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
                     int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
