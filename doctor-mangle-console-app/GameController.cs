@@ -18,7 +18,7 @@ namespace doctor_mangle_console_app
         private readonly IParkService _parkService;
         private readonly IBattleService _battleService;
         private readonly IComparer<BodyPart> _partComparer;
-        private readonly IGameRepository _gameRepo;
+        private readonly GameRepo _gameRepo;
         private readonly string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
 
         public GameData Data { get; set; }
@@ -30,7 +30,7 @@ namespace doctor_mangle_console_app
             IParkService parkService,
             IBattleService battleService,
             IComparer<BodyPart> partComparer,
-            IGameRepository gameRepo)
+            GameRepo gameRepo)
         {
             this._gameService = gameService;
             this._playerService = playerService;
@@ -46,7 +46,7 @@ namespace doctor_mangle_console_app
             StaticConsoleHelper.TalkPause("Welcome to the Isle of Dr. Mangle.");
             if (_gameRepo.CanLoadGames())
             {
-                Data = _gameRepo.LoadGame();
+                Data = _gameRepo.LoadGameDialogue();
             }
             if (Data == null)
             {

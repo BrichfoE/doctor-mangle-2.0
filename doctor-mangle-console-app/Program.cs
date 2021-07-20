@@ -12,9 +12,9 @@ namespace doctor_mangle_console_app
     public class Program
     {
         private readonly GameController _gc;
-        private readonly IGameRepository _gr;
+        private readonly GameRepo _gr;
 
-        public Program(GameController gc, IGameRepository gr) { _gc = gc; _gr = gr; }
+        public Program(GameController gc, GameRepo gr) { _gc = gc; _gr = gr; }
         static void Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
@@ -32,7 +32,7 @@ namespace doctor_mangle_console_app
                         .AddTransient<IMonsterService, MonsterService>()
                         .AddTransient<IMonsterService, MonsterService>()
                         .AddTransient<IComparer<BodyPart>, PartComparer>()
-                        .AddSingleton<IGameRepository, GameRepo>()
+                        .AddSingleton<GameRepo>()
                         .AddSingleton<Program>()
                         .AddSingleton<Random>()
                         .AddSingleton<GameController>();
@@ -41,19 +41,8 @@ namespace doctor_mangle_console_app
 
         public void Run()
         {
+            _gc.Init();
             bool activeGame = true;
-            try
-            {
-                _gc.Init();
-            }
-            catch (Exception ex)
-            {
-                string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
-                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                _gr.LogException(_gc.Data, $"General exception {currentFile} line {currentLine}", ex, true);
-                activeGame = false;
-            }
-
             while (activeGame)
             {
                 try

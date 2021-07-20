@@ -1,5 +1,6 @@
 ﻿using doctor_mangle.models;
 using System;
+using System.Collections.Generic;
 
 namespace doctor_mangle.interfaces
 {
@@ -9,9 +10,10 @@ namespace doctor_mangle.interfaces
         void FileSetup();
         void SaveGame(GameData gd);
         bool CanLoadGames();
-        GameData LoadGame();
+        GameData LoadGame(int gameId);
         int GetNextGameID();
         int GetGameIdFromName(string name);
+        List<string> GetSavedGameNames();
         void LogException(GameData gd, string exceptionText, Exception ex, bool willClose);
     }
 }

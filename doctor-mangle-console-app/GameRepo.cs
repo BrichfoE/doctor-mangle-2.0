@@ -1,29 +1,22 @@
-﻿using doctor_mangle.interfaces;
+﻿using doctor_mangle.data;
+using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
 
 namespace doctor_mangle_console_app
 {
-    public class GameRepo : IGameRepository
+    public class GameRepo : GameRepositoryBase
     {
         private readonly string filePath = ConfigurationManager.AppSettings["filepath"];
-        private readonly IParkService _parkService;
-        private readonly IMonsterService _monsterService;
         private int exceptionCount;
-        private Dictionary<string, int> gameIndex = new Dictionary<string, int>();
 
-        public GameRepo(IParkService parkService, IMonsterService monsterService)
-        {
-            this._parkService = parkService;
-            this._monsterService = monsterService;
-        }
+        public GameRepo(IParkService parkService, IMonsterService monsterService) : base(parkService, monsterService) { }
 
-        public void FileSetup()
+        public override void FileSetup()
         {
             if (!Directory.Exists(filePath))
             {
@@ -50,18 +43,8 @@ namespace doctor_mangle_console_app
             }
         }
 
-        public void SaveGame(GameData gd)
+        protected override void SaveImplementation(GameData gd)
         {
-            foreach (var park in gd.Parks)
-            {
-                _parkService.MovePartsForSerilaization(park);
-            }
-            _monsterService.MovePartsForSerilaization(gd.CurrentPlayer.Monster);
-            foreach (var player in gd.AiPlayers)
-            {
-                _monsterService.MovePartsForSerilaization(player.Monster);
-            }
-
             string saveFile = Path.Combine(filePath, $"dat_{gd.GameDataId}.txt");
             if (!File.Exists(saveFile))
             {
@@ -80,88 +63,24 @@ namespace doctor_mangle_console_app
 
             File.WriteAllText(saveFile, JsonConvert.SerializeObject(gd, Formatting.Indented));
             Console.WriteLine("Game Saved");
-            this.MovePartsAfterDeserialization(gd);
         }
 
-        public bool CanLoadGames()
+        protected override GameData LoadImplementation(int gameId)
         {
-            // check if there's a placeholder in the index that would skew results
-            var expected = gameIndex["_placeholder"] == 0 ? 1 : 0;
-            return gameIndex.Count > expected;
-        }
 
-        public GameData LoadGame()
-        {
-            GameData data = null;
-            int gameId = 1;
-            int intInput;
-
-            Console.WriteLine("Would you like to load a previous game?");
-            Console.WriteLine("0 - Start New Game");
-            Console.WriteLine("1 - Load a Previous Game");
-            intInput = StaticConsoleHelper.CheckInput(0, 1);
-            if (intInput == 0)
-            {
-                return null;
-            }
-            bool halt = true;
-            while (halt)
-            {
-                Console.WriteLine("Please enter the name of the game you would like to load.");
-                foreach (var game in gameIndex)
-                {
-                    if (game.Key != "_placeholder" && game.Value != 0)
-                    {
-                        Console.WriteLine(game.Value + " - " + game.Key);
-                    }
-                }
-                string gameName = Console.ReadLine();
-
-                if (gameIndex.TryGetValue(gameName, out gameId))
-                {
-                    halt = false;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid game name, please enter the name of a game.");
-                }
-            }
             string saveFile = Path.Combine(filePath, "dat_" + gameId.ToString() + ".txt");
 
             if (File.Exists(saveFile))
             {
                 string fileText = File.ReadAllText(saveFile);
-                data = JsonConvert.DeserializeObject<GameData>(fileText);
                 Console.WriteLine("Load successful!");
-            }
-            this.MovePartsAfterDeserialization(data);
-            return data;
-        }
-
-        public int GetNextGameID()
-        {
-            int GameID;
-
-            if (gameIndex == null)
-            {
-                GameID = 1;
-            }
-            else
-            {
-                GameID = gameIndex.Last().Value + 1;
+                return JsonConvert.DeserializeObject<GameData>(fileText);
             }
 
-            return GameID;
+            return null;
         }
 
-        public int GetGameIdFromName(string name)
-        {
-            return gameIndex.ContainsKey(name)
-                ? gameIndex[name]
-                : -1;
-        }
-
-        public void LogException(GameData gd, string exceptionText, Exception ex, bool willClose)
+        public override void LogException(GameData gd, string exceptionText, Exception ex, bool willClose)
         {
             exceptionCount += 1;
             string errorFileName = Path.Combine(filePath, "Errors\\dat_" + gd.GameDataId.ToString() + "_Exception" + exceptionCount.ToString() +"_"+ DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt");
@@ -187,17 +106,49 @@ namespace doctor_mangle_console_app
                 StaticConsoleHelper.TalkPause("Error Logged, section skipped.");
         }
 
-        private void MovePartsAfterDeserialization(GameData gd)
+        public GameData LoadGameDialogue()
         {
-            foreach (var park in gd.Parks)
+            int gameId = 1;
+            int intInput;
+
+            Console.WriteLine("Would you like to load a previous game?");
+            Console.WriteLine("0 - Start New Game");
+            Console.WriteLine("1 - Load a Previous Game");
+            intInput = StaticConsoleHelper.CheckInput(0, 1);
+            if (intInput == 0)
             {
-                _parkService.MovePartsAfterDeserilaization(park);
+                return null;
             }
-            _monsterService.MovePartsAfterDeserilaization(gd.CurrentPlayer.Monster);
-            foreach (var player in gd.AiPlayers)
+            bool halt = true;
+            var games = this.GetSavedGameNames();
+            if (games.Count < 0)
             {
-                _monsterService.MovePartsAfterDeserilaization(player.Monster);
+                Console.WriteLine("No saved games available to load.");
+                return null;
             }
+            while (halt)
+            {
+                Console.WriteLine("Please enter the name of the game you would like to load.");
+
+                foreach (var game in games)
+                {
+                    if (game != "_placeholder")
+                    {
+                        Console.WriteLine(game);
+                    }
+                }
+                string gameName = Console.ReadLine();
+
+                if (gameIndex.TryGetValue(gameName, out gameId))
+                {
+                    halt = false;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid game name, please enter the name of a game.");
+                }
+            }
+            return LoadGame(gameId);
         }
     }
 }
