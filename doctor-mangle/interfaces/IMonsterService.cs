@@ -2,10 +2,7 @@
 
 namespace doctor_mangle.interfaces
 {
-    public interface IMonsterService
+    public interface IMonsterService: IPartsCollectionSerializer
     {
-        void MovePartsForSerilaization(MonsterData monster);
-
-        void MovePartsAfterDeserilaization(MonsterData monster);
     }
 }

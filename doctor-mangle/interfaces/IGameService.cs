@@ -1,7 +1,4 @@
 ﻿using doctor_mangle.models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace doctor_mangle.interfaces
 {

@@ -47,6 +47,9 @@ namespace doctor_mangle_console_app
             if (_gameRepo.CanLoadGames())
             {
                 Data = _gameRepo.LoadGameDialogue();
+                var players = new List<PlayerData>() { Data.CurrentPlayer };
+                players.AddRange(Data.AiPlayers);
+                this.AllPlayers = players.ToArray();
             }
             if (Data == null)
             {

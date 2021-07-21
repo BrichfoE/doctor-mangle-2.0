@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace doctor_mangle.models
 {
-    public class PlayerData
+    public class PlayerData : PartsCollection
     {
         private BodyPart[] _bag = new BodyPart[5];
         private List<BodyPart> _workshop = new List<BodyPart>();

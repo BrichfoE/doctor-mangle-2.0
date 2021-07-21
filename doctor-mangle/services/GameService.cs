@@ -1,13 +1,11 @@
-﻿using doctor_mangle.constants;
-using doctor_mangle.interfaces;
+﻿using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace doctor_mangle
+namespace doctor_mangle.services
 {
     public class GameService : IGameService
     {

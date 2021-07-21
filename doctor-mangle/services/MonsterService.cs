@@ -2,16 +2,21 @@
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace doctor_mangle.services
 {
     public class MonsterService : IMonsterService
     {
-        public void MovePartsForSerilaization(MonsterData monster)
+        public void MovePartsForSerilaization<T>(T objectWithCollection)
         {
+            if (objectWithCollection.GetType() != typeof(MonsterData))
+            {
+                throw new ArgumentException("Must use monster in MonsterService serialization implementation");
+            }
+
+            var monster = objectWithCollection as MonsterData;
+
             monster._heads = monster.Parts
                 .Where(x => x.GetType() == typeof(Head))
                 .Select(y => new Head(y))
@@ -35,8 +40,15 @@ namespace doctor_mangle.services
             monster.Parts.Clear();
         }
 
-        public void MovePartsAfterDeserilaization(MonsterData monster)
+        public void MovePartsAfterDeserilaization<T>(T objectWithCollection)
         {
+            if (objectWithCollection.GetType() != typeof(MonsterData))
+            {
+                throw new ArgumentException("Must use monster in MonsterService serialization implementation");
+            }
+
+            var monster = objectWithCollection as MonsterData;
+
             foreach (var item in monster._heads)
             {
                 monster.Parts.Add(item);

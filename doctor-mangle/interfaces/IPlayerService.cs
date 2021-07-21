@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace doctor_mangle.interfaces
 {
-    public interface IPlayerService
+    public interface IPlayerService : IPartsCollectionSerializer
     {
         PlayerData GeneratePlayer(string playerName, bool isAI);
         string GenerateRandomName();

@@ -2,13 +2,9 @@
 
 namespace doctor_mangle.interfaces
 {
-    public interface IParkService
+    public interface IParkService : IPartsCollectionSerializer
     {
         ParkData[] GenerateParks();
-
-        void MovePartsForSerilaization(ParkData park);
-
-        void MovePartsAfterDeserilaization(ParkData park);
 
         ParkData[] AddParts(ParkData[] locations, int playerCount);
 

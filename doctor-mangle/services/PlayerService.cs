@@ -4,6 +4,7 @@ using doctor_mangle.models;
 using doctor_mangle.models.parts;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace doctor_mangle.services
 {
@@ -193,6 +194,70 @@ namespace doctor_mangle.services
             if (result != 0) return result;
 
             return 0;
+        }
+
+
+        public void MovePartsForSerilaization<T>(T objectWithCollection)
+        {
+            if (objectWithCollection.GetType() != typeof(PlayerData))
+            {
+                throw new ArgumentException("Must use player in PlayerService serialization implementation");
+            }
+
+            var player = objectWithCollection as PlayerData;
+
+            player._heads = player.WorkshopCuppoard
+                .Where(x => x.GetType() == typeof(Head))
+                .Select(y => new Head(y))
+                .ToList();
+
+            player._torsos = player.WorkshopCuppoard
+                .Where(x => x.GetType() == typeof(Torso))
+                .Select(y => new Torso(y))
+                .ToList();
+
+            player._arms = player.WorkshopCuppoard
+                .Where(x => x.GetType() == typeof(Arm))
+                .Select(y => new Arm(y))
+                .ToList();
+
+            player._legs = player.WorkshopCuppoard
+                .Where(x => x.GetType() == typeof(Leg))
+                .Select(y => new Leg(y))
+                .ToList();
+
+            player.WorkshopCuppoard.Clear();
+        }
+
+        public void MovePartsAfterDeserilaization<T>(T objectWithCollection)
+        {
+            if (objectWithCollection.GetType() != typeof(PlayerData))
+            {
+                throw new ArgumentException("Must use player in PlayerService serialization implementation");
+            }
+
+            var player = objectWithCollection as PlayerData;
+
+            foreach (var item in player._heads)
+            {
+                player.WorkshopCuppoard.Add(item);
+            }
+            player._heads.Clear();
+            foreach (var item in player._torsos)
+            {
+                player.WorkshopCuppoard.Add(item);
+            }
+            player._torsos.Clear();
+            foreach (var item in player._arms)
+            {
+                player.WorkshopCuppoard.Add(item);
+            }
+            player._arms.Clear();
+            foreach (var item in player._legs)
+            {
+                player.WorkshopCuppoard.Add(item);
+            }
+            player._legs.Clear();
         }
     }
 }

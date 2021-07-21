@@ -27,8 +27,15 @@ namespace doctor_mangle.services
             return _locations;
         }
 
-        public void MovePartsForSerilaization(ParkData park)
+        public void MovePartsForSerilaization<T>(T objectWithCollection)
         {
+            if (objectWithCollection.GetType() != typeof(ParkData))
+            {
+                throw new ArgumentException("Must use player in PlayerService serialization implementation");
+            }
+
+            var park = objectWithCollection as ParkData;
+
             park._heads = park.PartsList
                 .Where(x => x.GetType() == typeof(Head))
                 .Select(y => new Head(y))
@@ -51,8 +58,16 @@ namespace doctor_mangle.services
 
             park.PartsList.Clear();
         }
-        public void MovePartsAfterDeserilaization(ParkData park)
+        public void MovePartsAfterDeserilaization<T>(T objectWithCollection)
         {
+
+            if (objectWithCollection.GetType() != typeof(ParkData))
+            {
+                throw new ArgumentException("Must use player in PlayerService serialization implementation");
+            }
+
+            var park = objectWithCollection as ParkData;
+
             var sum = park._arms.Count
                 + park._torsos.Count
                 + park._heads.Count

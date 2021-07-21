@@ -14,7 +14,7 @@ namespace doctor_mangle_console_app
         private readonly string filePath = ConfigurationManager.AppSettings["filepath"];
         private int exceptionCount;
 
-        public GameRepo(IParkService parkService, IMonsterService monsterService) : base(parkService, monsterService) { }
+        public GameRepo(IParkService parkService, IMonsterService monsterService, IPlayerService playerService) : base(parkService, monsterService, playerService) { }
 
         public override void FileSetup()
         {
@@ -61,7 +61,8 @@ namespace doctor_mangle_console_app
                 }
             }
 
-            File.WriteAllText(saveFile, JsonConvert.SerializeObject(gd, Formatting.Indented));
+            var dataToSave = JsonConvert.SerializeObject(gd, Formatting.Indented);
+            File.WriteAllText(saveFile, dataToSave);
             Console.WriteLine("Game Saved");
         }
 

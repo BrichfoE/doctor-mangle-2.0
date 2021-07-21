@@ -11,11 +11,13 @@ namespace doctor_mangle.data
         protected Dictionary<string, int> gameIndex = new Dictionary<string, int>();
         protected readonly IParkService _parkService;
         protected readonly IMonsterService _monsterService;
+        protected readonly IPlayerService _playerService;
 
-        public GameRepositoryBase(IParkService parkService, IMonsterService monsterService)
+        public GameRepositoryBase(IParkService parkService, IMonsterService monsterService, IPlayerService playerService)
         {
             this._parkService = parkService;
             this._monsterService = monsterService;
+            this._playerService = playerService;
         }
 
         public bool CanLoadGames()
@@ -81,12 +83,15 @@ namespace doctor_mangle.data
             {
                 _parkService.MovePartsForSerilaization(park);
             }
+
+            _playerService.MovePartsForSerilaization(gd.CurrentPlayer);
             if (gd.CurrentPlayer.Monster != null)
             {
                 _monsterService.MovePartsForSerilaization(gd.CurrentPlayer.Monster);
             }
             foreach (var player in gd.AiPlayers)
             {
+                _playerService.MovePartsForSerilaization(player);
                 if (player.Monster != null)
                 {
                     _monsterService.MovePartsForSerilaization(player.Monster);
@@ -102,10 +107,12 @@ namespace doctor_mangle.data
             }
             if (gd.CurrentPlayer.Monster != null)
             {
+                _playerService.MovePartsAfterDeserilaization(gd.CurrentPlayer);
                 _monsterService.MovePartsAfterDeserilaization(gd.CurrentPlayer.Monster);
             }
             foreach (var player in gd.AiPlayers)
             {
+                _playerService.MovePartsAfterDeserilaization(player);
                 if (player.Monster != null)
                 {
                     _monsterService.MovePartsAfterDeserilaization(player.Monster);
