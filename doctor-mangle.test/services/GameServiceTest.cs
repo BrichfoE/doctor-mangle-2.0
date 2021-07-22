@@ -3,6 +3,7 @@ using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
+using doctor_mangle.services;
 using doctor_mangle_data.models;
 using Moq;
 using NUnit.Framework;
