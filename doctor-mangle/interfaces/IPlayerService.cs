@@ -18,5 +18,6 @@ namespace doctor_mangle.interfaces
         string GetWorkshopItemList(PlayerData player);
         PlayerData[] SortPlayersByWins(PlayerData[] players);
         int Compare(PlayerData x, PlayerData y);
+        void TryBuildMonster(PlayerData player);
     }
 }
