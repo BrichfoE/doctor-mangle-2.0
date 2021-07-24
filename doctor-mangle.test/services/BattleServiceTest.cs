@@ -92,8 +92,8 @@ namespace doctor_mangle.test.services
                 "losing_monster boasts 0 wins!",
                 "winning_monster swings at losing_monster's Common Animal torso!",
                 "Common Animal torso goes from 1 to -1.57142871156032",
-                "doctor_mangle.models.monsters.MonsterData's Common Animal torso has been destroyed!",
-                "doctor_mangle.models.PlayerData's opponent can no longer put a fight.\r\ndoctor_mangle.models.PlayerData is victorious!"
+                "losing_monster's Common Animal torso has been destroyed!",
+                "winner's opponent can no longer put a fight.\r\nwinner is victorious!"
             };
 
             var winner = new PlayerData()
@@ -139,8 +139,8 @@ namespace doctor_mangle.test.services
                 "Common Animal torso goes from 1 to 0.9052631616988669",
                 "winning_monster swings at losing_monster's Common Animal torso!",
                 "Common Animal torso goes from 0.228571386531905 to -0.483294131855020",
-                "doctor_mangle.models.monsters.MonsterData's Common Animal torso has been destroyed!",
-                "doctor_mangle.models.PlayerData's opponent can no longer put a fight.\r\ndoctor_mangle.models.PlayerData is victorious!"
+                "losing_monster's Common Animal torso has been destroyed!",
+                "winner's opponent can no longer put a fight.\r\nwinner is victorious!"
             };
 
             var winner = new PlayerData()

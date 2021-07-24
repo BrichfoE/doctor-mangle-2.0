@@ -12,6 +12,7 @@ namespace doctor_mangle
                 .AddSingleton<IGameService, GameService>()
                 .AddTransient<IPlayerService, PlayerService>()
                 .AddTransient<IParkService, ParkService>()
+                .AddTransient<IPartService, PartService>()
                 .AddTransient<IBattleService, BattleService>()
                 .AddTransient<IMonsterService, MonsterService>();
         }

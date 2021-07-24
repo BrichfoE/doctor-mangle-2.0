@@ -17,6 +17,8 @@ namespace doctor_mangle_console_app
         private readonly IPlayerService _playerService;
         private readonly IParkService _parkService;
         private readonly IBattleService _battleService;
+        private readonly IPartService _partService;
+        private readonly IMonsterService _monsterService;
         private readonly IComparer<BodyPart> _partComparer;
         private readonly GameRepo _gameRepo;
         private readonly string currentFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName();
@@ -29,6 +31,8 @@ namespace doctor_mangle_console_app
             IPlayerService playerService,
             IParkService parkService,
             IBattleService battleService,
+            IPartService partService,
+            IMonsterService monsterService,
             IComparer<BodyPart> partComparer,
             GameRepo gameRepo)
         {
@@ -36,6 +40,8 @@ namespace doctor_mangle_console_app
             this._playerService = playerService;
             this._parkService = parkService;
             this._battleService = battleService;
+            this._partService = partService;
+            this._monsterService = monsterService;
             this._partComparer = partComparer;
             this._gameRepo = gameRepo;
         }
@@ -96,7 +102,7 @@ namespace doctor_mangle_console_app
             StaticConsoleHelper.TalkPause("The parks will be open for 5 hours...");
             StaticConsoleHelper.TalkPause("You will then have one more hour in your labs before the evening's entertainment.");
 
-            for (int i = 1; i < 6; i++)
+            for (int i = 1; i < 5; i++)
             {
                 try
                 {
@@ -263,23 +269,31 @@ namespace doctor_mangle_console_app
         }
         private MonsterData PlayerBuildMonster(bool isNew)
         {
-            var table = new List<BodyPart>();
-            List<Head> heads = Data.CurrentPlayer.WorkshopCuppoard
-                .Where(x => x.GetType() == typeof(Head))
-                .Select(y => (Head)y).ToList();
+            // check for any parts
+            MonsterData currentMonster = Data.CurrentPlayer.Monster;
+            if (Data.CurrentPlayer.WorkshopCuppoard.Count == 0)
+            {
+                Console.WriteLine("You do not have any parts to add this eveing.\r\nBetter luck tomorrow...");
+                return currentMonster;
+            }
 
-            List<Torso> torsos = Data.CurrentPlayer.WorkshopCuppoard
+            // get ready to work
+            var table = new List<BodyPart>();
+            List<BodyPart> heads = Data.CurrentPlayer.WorkshopCuppoard
+                .Where(x => x.GetType() == typeof(Head))
+                .Select(y => y).ToList();
+
+            List<BodyPart> torsos = Data.CurrentPlayer.WorkshopCuppoard
                 .Where(x => x.GetType() == typeof(Torso))
-                .Select(y => (Torso)y).ToList();
+                .Select(y => y).ToList();
 
             List<BodyPart> limbs = Data.CurrentPlayer.WorkshopCuppoard
                 .Where(x => x.GetType() != typeof(Head)
-                    && x.GetType() == typeof(Torso))
+                    && x.GetType() != typeof(Torso))
                 .ToList();
 
-            MonsterData currentMonster = Data.CurrentPlayer.Monster;
 
-            if (isNew)
+            if (isNew || currentMonster == null)
             {
                 Console.WriteLine("You aproach the empty table...");
             }
@@ -290,149 +304,124 @@ namespace doctor_mangle_console_app
             }
 
             // ensure a viable monster is possible
-            if (heads.Count == 0 && !table.Where(x => x.PartType.GetType() == typeof(Head)).Any())
+            if (heads.Count == 0 && !table.Where(x => x.GetType() == typeof(Head)).Any())
             {
                 Console.WriteLine($"You do not have a head in your workshop.\r\nA monster without one is no moster at all, better luck tomorrow...");
                 return currentMonster;
             }
-            if (torsos.Count == 0 && !table.Where(x => x.PartType.GetType() == typeof(Torso)).Any())
+            if (torsos.Count == 0 && !table.Where(x => x.GetType() == typeof(Torso)).Any())
             {
                 Console.WriteLine($"You do not have a torso in your workshop.\r\nA monster without one is no moster at all, better luck tomorrow...");
                 return currentMonster;
             }
-            if (limbs.Count == 0 && !table.Where(x => x.PartType.GetType() != typeof(Head) || x.PartType.GetType() != typeof(Torso)).Any())
+            if (limbs.Count == 0 && !table.Where(x => x.GetType() != typeof(Head) || x.GetType() != typeof(Torso)).Any())
             {
                 Console.WriteLine($"You do not have any limbs in your workshop.\r\nBetter luck tomorrow...");
                 return currentMonster;
             }
+            heads = this.AddPartType(heads, table, false, out bool cont);
+            if (!cont)
+            {
+                return currentMonster;
+            }
+            torsos = this.AddPartType(torsos, table, false, out cont);
+            if (!cont)
+            {
+                return currentMonster;
+            }
+            limbs = this.AddPartType(limbs, table, true, out cont);
+            if (!cont)
+            {
+                return currentMonster;
+            }
 
-            _playerService.TryBuildMonster(Data.CurrentPlayer);
-            return Data.CurrentPlayer.Monster;
+            // parts selection done, generate monster
+            MonsterData newMonster = currentMonster == null
+                ? new MonsterData(null, table)
+                : new MonsterData(currentMonster.Name, table);
+            if (currentMonster != null)
+            {
+                newMonster.Wins = currentMonster.Wins;
+                newMonster.Fights = currentMonster.Fights;
+            }
 
-            //int intInput;
-            //bool leave = false;
-            //bool halt = true;
+            StaticConsoleHelper.TalkPause("This is your monster...");
+            StaticConsoleHelper.TalkPause(_monsterService.GetMonsterDetails(newMonster));
+            Console.WriteLine("Would you like to keep this monster?");
+            Console.WriteLine("1 - Yes\r\n2 - No");
+            int intInput = StaticConsoleHelper.CheckInput(1, 2);
+            if (intInput == 1)
+            {
+                if (isNew)
+                {
+                    Console.WriteLine("What is its name?");
+                    currentMonster = newMonster;
+                    currentMonster.Name = Console.ReadLine();
+                }
+                else
+                {
+                    currentMonster.Parts.Clear();
+                    foreach (var part in table)
+                    {
+                        currentMonster.Parts.Add(part);
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Better luck building tomorrow...");
+            }
+        
 
-            //while (halt)
-            //{
-            //    Console.WriteLine("Workshop Items:");
-            //    Console.WriteLine("0 - Leave Table");
-            //    int count = 0;
-            //    foreach (var item in workshopCopy)
-            //    {
-            //        count++;
-            //        Console.WriteLine(count + " - " + item.PartName);
-            //    }
-            
+            Data.CurrentPlayer.WorkshopCuppoard.Clear();
+            Data.CurrentPlayer.WorkshopCuppoard.AddRange(heads);
+            Data.CurrentPlayer.WorkshopCuppoard.AddRange(torsos);
+            Data.CurrentPlayer.WorkshopCuppoard.AddRange(limbs);
+            return currentMonster;
 
-            //        Console.WriteLine("Please choose a " + type + ":");
-            //        intInput = StaticConsoleHelper.CheckInput(0, StaticUtility.NonNullCount(workshopCopy));
+        }
 
-            //        if (intInput == 0)
-            //        {
-            //            halt = false;
-            //            leave = true;
-            //            break;
-            //        }
+        private List<BodyPart> AddPartType(List<BodyPart> parts, List<BodyPart> table, bool isLimb, out bool continueBuild)
+        {
+            if(parts.Count == 0)
+            {
+                continueBuild = true;
+                return parts;
+            }
 
-            //        BodyPart chosenPart = workshopCopy[intInput - 1];
+            var partCopy = parts.ToArray();
+            var type = isLimb
+                ? "limbs"
+                : parts[0].PartType.ToString();
+            StaticConsoleHelper.TalkPause($"Let's look at all {parts.Count} of these {type} individually.");
+            for (int i = 0; i < partCopy.Length; i++)
+            {
+                StaticConsoleHelper.TalkPause(_partService.GetPartDetails(partCopy[i]));
+                
+                Console.WriteLine("Use this part?");
+                Console.WriteLine("1 - Yes");
+                Console.WriteLine("2 - No, skip part");
+                Console.WriteLine("3 - No, leave table for night");
+                int intInput = StaticConsoleHelper.CheckInput(1, 3);
 
-            //        Console.WriteLine(chosenPart.PartName);
-            //        if (chosenPart.PartType != type)
-            //        {
-            //            Console.WriteLine("That is not a " + type + "!");
-            //        }
-            //        else
-            //        {
-            //            Console.WriteLine("Durability: " + chosenPart.PartDurability);
-            //            Console.WriteLine("Alacrity: " + chosenPart.PartStats[Stat.Alacrity]);
-            //            Console.WriteLine("Strenght: " + chosenPart.PartStats[Stat.Strength]);
-            //            Console.WriteLine("Endurance: " + chosenPart.PartStats[Stat.Endurance]);
-            //            StaticConsoleHelper.TalkPause("Technique: " + chosenPart.PartStats[Stat.Technique]);
-            //            Console.WriteLine("Use this part?");
-            //            Console.WriteLine("1 - Yes");
-            //            Console.WriteLine("2 - No");
-            //            Console.WriteLine("3 - Skip part");
-            //            Console.WriteLine("4 - Leave Table");
-            //            int intInput2 = StaticConsoleHelper.CheckInput(1, 4);
-
-            //            switch (intInput2)
-            //            {
-            //                case 1:
-            //                    table.Add(chosenPart);
-            //                    workshopCopy.RemoveAt(intInput - 1);
-            //                    break;
-            //                case 2:
-            //                    break;
-            //                case 3:
-            //                    halt = false;
-            //                    break;
-            //                case 4:
-            //                    leave = true;
-            //                    halt = false;
-            //                    break;
-            //                default:
-            //                    break;
-            //            }
-
-            //        }
-
-            //    }
-            //    //leave table
-            //    if (leave)
-            //    {
-            //        break;
-            //    }
-            
-
-            //if (table[0] != null && table[1] != null)
-            //{
-            //    MonsterData newMonster = new MonsterData(null, table);
-
-            //    StaticConsoleHelper.TalkPause("This is your monster...");
-            //    foreach (var part in table)
-            //    {
-            //        if (part != null)
-            //        {
-            //            Console.WriteLine(part.PartName);
-            //        }
-            //    }
-            //    int count = 0;
-            //    foreach (var stat in newMonster.MonsterStats)
-            //    {
-            //        // Console.WriteLine(StaticReference.statList[count] + ": " + stat);
-            //        count++;
-            //    }
-            //    Console.WriteLine("Would you like to keep this monster?");
-            //    Console.WriteLine("1 - Yes, 2 - No");
-            //    intInput = StaticConsoleHelper.CheckInput(1, 2);
-            //    if (intInput == 1)
-            //    {
-            //        if (isNew)
-            //        {
-            //            Console.WriteLine("What is its name?");
-            //            currentMonster = newMonster;
-            //            currentMonster.Name = Console.ReadLine();
-
-            //        }
-            //        else
-            //        {
-            //            foreach (var part in table)
-            //            {
-            //                currentMonster.Parts.Add(part);
-            //            }
-            //        }
-            //        Data.CurrentPlayer.WorkshopCuppoard = workshopCopy.Select(x => x).ToList();
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine("Better luck building tomorrow...");
-            //    }
-            //}
-
-            //Data.CurrentPlayer.WorkshopCuppoard = Data.CurrentPlayer.WorkshopCuppoard.Where(x => x != null).ToList();
-            //return currentMonster;
-
+                switch (intInput)
+                {
+                    case 1:
+                        table.Add(partCopy[i]);
+                        partCopy[i] = null;
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        continueBuild = false;
+                        return partCopy.Where(x => x != null).ToList();
+                    default:
+                        break;
+                }
+                
+            }
+            continueBuild = true;
+            return partCopy.Where(x => x != null).ToList();
         }
 
         private bool PlayerLabTurn()
