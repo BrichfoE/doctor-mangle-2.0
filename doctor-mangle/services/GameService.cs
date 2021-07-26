@@ -1,4 +1,5 @@
-﻿using doctor_mangle.interfaces;
+﻿using doctor_mangle.constants;
+using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
@@ -92,6 +93,13 @@ namespace doctor_mangle.services
                     ai.Bag[round - 1] = part;
                 }
             }
+        }
+
+        public void AdvancePhase(GameData data)
+        {
+            data.GamePhase = data.GamePhase == Phase.Night
+                ? Phase.Search
+                : data.GamePhase + 1;
         }
     }
 }

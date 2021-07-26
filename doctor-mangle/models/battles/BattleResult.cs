@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace doctor_mangle.models.battles
 {
-    public class Battle
+    public class BattleResult
     {
         private List<string> _text = new List<string>();
         private List<BattleRound> _rounds = new List<BattleRound>();

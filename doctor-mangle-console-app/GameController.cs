@@ -3,7 +3,6 @@ using doctor_mangle.interfaces;
 using doctor_mangle.models;
 using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
-using doctor_mangle.utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +15,7 @@ namespace doctor_mangle_console_app
         private readonly IGameService _gameService;
         private readonly IPlayerService _playerService;
         private readonly IParkService _parkService;
+        private readonly IArenaService _arenaService;
         private readonly IBattleService _battleService;
         private readonly IPartService _partService;
         private readonly IMonsterService _monsterService;
@@ -27,6 +27,7 @@ namespace doctor_mangle_console_app
         private PlayerData[] AllPlayers;
 
         public GameController(
+            IArenaService arenaService,
             IGameService gameService,
             IPlayerService playerService,
             IParkService parkService,
@@ -36,6 +37,7 @@ namespace doctor_mangle_console_app
             IComparer<BodyPart> partComparer,
             GameRepo gameRepo)
         {
+            this._arenaService = arenaService;
             this._gameService = gameService;
             this._playerService = playerService;
             this._parkService = parkService;
@@ -90,14 +92,26 @@ namespace doctor_mangle_console_app
                 }
                 _gameRepo.SaveGame(Data);
             }
+            _gameService.AdvancePhase(Data);
         }
 
         public bool RunGame()
         {
-            var intInput = 0;
             bool gameStatus = true;
 
-            #region search
+            if(Data.GamePhase == Phase.Search) gameStatus = SearchPhase();
+            if (Data.GamePhase == Phase.Build) gameStatus = BuildPhase();
+            if (Data.GamePhase == Phase.Fight) gameStatus = FightPhase();
+            if (Data.GamePhase == Phase.Night) gameStatus = NightPhase();
+
+            return gameStatus;
+        }
+
+        #region search
+
+        private bool SearchPhase()
+        {
+            int intInput;
             StaticConsoleHelper.TalkPause("A new day has dawned!");
             StaticConsoleHelper.TalkPause("The parks will be open for 5 hours...");
             StaticConsoleHelper.TalkPause("You will then have one more hour in your labs before the evening's entertainment.");
@@ -112,7 +126,7 @@ namespace doctor_mangle_console_app
                     intInput = StaticConsoleHelper.CheckInput(1, 4);
                     Data.CurrentRegion = intInput;
 
-                    gameStatus = PlayerSearchTurn(i - 1);
+                    var gameStatus = PlayerSearchTurn(i - 1);
                     _gameService.AISearchTurn(Data, i);
                     if (!gameStatus)
                     {
@@ -125,94 +139,10 @@ namespace doctor_mangle_console_app
                     _gameRepo.LogException(Data, $"Search Phase exception {currentFile} line {currentLine}", ex, false);
                 }
             }
-            #endregion
-
-            #region build
-            try
-            {
-                StaticConsoleHelper.TalkPause("It is now 6 o'clock. Return to your lab and prepare for the floorshow at 7.");
-                Data.CurrentRegion = 0;
-                foreach (var player in AllPlayers)
-                {
-                    _playerService.DumpBagIntoWorkshop(player);
-                }
-                Console.WriteLine("Bag contents added to workshop inventory.");
-                gameStatus = PlayerLabTurn();
-                if (!gameStatus)
-                {
-                    return gameStatus;
-                }
-            }
-            catch (System.Exception ex)
-            {
-                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                _gameRepo.LogException(Data, $"Player Build Phase exception {currentFile} line {currentLine}\n", ex, false);
-            }
-
-            try
-            {
-                _gameService.AIBuildTurn(Data);
-            }
-            catch (Exception ex)
-            {
-                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                _gameRepo.LogException(Data, $"AI Build Phase exception {currentFile} line {currentLine}\n", ex, false);
-            }
-
-
-            #endregion
-
-            #region fight
-            try
-            {
-                StaticConsoleHelper.TalkPause("Welcome to the evening's entertainment!");
-                if (Data.CurrentPlayer.Monster != null && Data.CurrentPlayer.Monster.CanFight)
-                {
-                    Console.WriteLine("Would you like to particpate tonight?");
-                    StaticConsoleHelper.TalkPause("1 - Yes, 2 - No");
-                    intInput = StaticConsoleHelper.CheckInput(1, 2);
-                    if (intInput != 1)
-                    {
-                        StaticConsoleHelper.TalkPause("Well, maybe tomorrow then...");
-                        Console.WriteLine("Let's find you a comfortable seat.");
-
-                    }
-                    else
-                    {
-                        StaticConsoleHelper.TalkPause("Let the games begin!");
-                    }
-                }
-                else
-                {
-                    StaticConsoleHelper.TalkPause("Seeing as you do not have a living, able bodied contestant...");
-                    Console.WriteLine("Let's find you a comfortable seat.");
-                }
-                ManageBattlePhase();
-            }
-            catch (Exception ex)
-            {
-                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                _gameRepo.LogException(Data, $"Fighting Phase exception {currentFile} line {currentLine}\n", ex, false);
-            }
-            #endregion
-
-            #region dayEnd
-            try
-            {
-                AllPlayers = _playerService.SortPlayersByWins(AllPlayers);
-                Data.Parks = _parkService.AddParts(Data.Parks, AllPlayers.Length);
-                Data.Parks = _parkService.HalveParts(Data.Parks);
-                Data.GameDayNumber++;
-                _gameRepo.SaveGame(Data);
-            }
-            catch (Exception ex)
-            {
-                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
-                _gameRepo.LogException(Data, $"End of Day Phaseexception {currentFile} line {currentLine}\n", ex, false);
-            }
-            return gameStatus;
-            #endregion
+            _gameService.AdvancePhase(Data);
+            return true;
         }
+
         private bool PlayerSearchTurn(int bagSlot)
         {
             bool status = true;
@@ -267,6 +197,46 @@ namespace doctor_mangle_console_app
             }
             return status;
         }
+
+        #endregion search
+
+        #region build
+
+        private bool BuildPhase()
+        {
+            try
+            {
+                StaticConsoleHelper.TalkPause("It is now 6 o'clock. Return to your lab and prepare for the floorshow at 7.");
+                Data.CurrentRegion = 0;
+                foreach (var player in AllPlayers)
+                {
+                    _playerService.DumpBagIntoWorkshop(player);
+                }
+                Console.WriteLine("Bag contents added to workshop inventory.");
+                var gameStatus = PlayerLabTurn();
+                if (!gameStatus)
+                {
+                    return gameStatus;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
+                _gameRepo.LogException(Data, $"Player Build Phase exception {currentFile} line {currentLine}\n", ex, false);
+            }
+
+            try
+            {
+                _gameService.AIBuildTurn(Data);
+            }
+            catch (Exception ex)
+            {
+                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
+                _gameRepo.LogException(Data, $"AI Build Phase exception {currentFile} line {currentLine}\n", ex, false);
+            }
+            _gameService.AdvancePhase(Data);
+            return true;
+        }
         private MonsterData PlayerBuildMonster(bool isNew)
         {
             // check for any parts
@@ -319,17 +289,17 @@ namespace doctor_mangle_console_app
                 Console.WriteLine($"You do not have any limbs in your workshop.\r\nBetter luck tomorrow...");
                 return currentMonster;
             }
-            heads = this.AddPartType(heads, table, false, out bool cont);
+            heads = this.PlayerAddMonsterPartByType(heads, table, false, out bool cont);
             if (!cont)
             {
                 return currentMonster;
             }
-            torsos = this.AddPartType(torsos, table, false, out cont);
+            torsos = this.PlayerAddMonsterPartByType(torsos, table, false, out cont);
             if (!cont)
             {
                 return currentMonster;
             }
-            limbs = this.AddPartType(limbs, table, true, out cont);
+            limbs = this.PlayerAddMonsterPartByType(limbs, table, true, out cont);
             if (!cont)
             {
                 return currentMonster;
@@ -381,7 +351,7 @@ namespace doctor_mangle_console_app
 
         }
 
-        private List<BodyPart> AddPartType(List<BodyPart> parts, List<BodyPart> table, bool isLimb, out bool continueBuild)
+        private List<BodyPart> PlayerAddMonsterPartByType(List<BodyPart> parts, List<BodyPart> table, bool isLimb, out bool continueBuild)
         {
             if(parts.Count == 0)
             {
@@ -513,69 +483,80 @@ namespace doctor_mangle_console_app
             return status;
         }
 
-        // TODO: Move this to the BattleService, this should return a comprehensive script with each fight script nested inside
-        private void ManageBattlePhase()
+        #endregion build
+
+        #region fight
+
+        private bool FightPhase()
         {
-            Queue<PlayerData> fighters = new Queue<PlayerData>();
-
-            //find all available competitors
-            foreach (var player in AllPlayers)
+            try
             {
-                if (player.Monster != null && player.Monster.CanFight)
+                StaticConsoleHelper.TalkPause("Welcome to the evening's entertainment!");
+                if (Data.CurrentPlayer.Monster != null && Data.CurrentPlayer.Monster.CanFight)
                 {
-                    fighters.Enqueue(player);
-                }
-            }
-
-            //pair off
-            if (fighters.Count == 0)
-            {
-                StaticConsoleHelper.TalkPause("There will be no show tonight!  Better luck gathering tomorrow");
-            }
-            else if (fighters.Count == 1)
-            {
-                StaticConsoleHelper.TalkPause("Only one of you managed to scrape together a monster?  No shows tonight, but rewards for the one busy beaver.");
-                _battleService.GrantCash(fighters.Dequeue(), 1);
-            }
-            else
-            {
-                decimal countTotal = fighters.Count;
-                //fight in rounds
-                while (fighters.Count != 0)
-                {
-                    int round = 0;
-                    if (fighters.Count == 1)
+                    Console.WriteLine("Would you like to particpate tonight?");
+                    StaticConsoleHelper.TalkPause("1 - Yes, 2 - No");
+                    var intInput = StaticConsoleHelper.CheckInput(1, 2);
+                    if (intInput != 1)
                     {
-                        StaticConsoleHelper.TalkPause("And we have a winner!");
-                        _battleService.GrantCash(fighters.Dequeue(), round);
+                        StaticConsoleHelper.TalkPause("Well, maybe tomorrow then...");
+                        Console.WriteLine("Let's find you a comfortable seat.");
                     }
                     else
                     {
-                        PlayerData left = fighters.Dequeue();
-                        PlayerData right = fighters.Dequeue();
-
-                        var result = _battleService.MonsterFight(left, right);
-                        foreach (var line in result.Text)
-                        {
-                            Console.WriteLine(line);
-                            Thread.Sleep(1000);
-                        }
-
-                        fighters.Enqueue(result.Winner);
-
+                        StaticConsoleHelper.TalkPause("Let the games begin!");
                     }
-                    if (fighters.Count <= Math.Ceiling(countTotal / 2))
-                    {
-                        round = round + 1;
-                        countTotal = fighters.Count;
-                    }
-
                 }
-
+                else
+                {
+                    StaticConsoleHelper.TalkPause("Seeing as you do not have a living, able bodied contestant...");
+                    Console.WriteLine("Let's find you a comfortable seat.");
+                }
+                var result = _arenaService.ManageBattlePhase(AllPlayers);
+                StaticConsoleHelper.TalkPause(result.OpeningLine);
+                foreach (var battle in result.Fights)
+                {
+                    foreach (var line in battle.Text)
+                    {
+                        Console.WriteLine(line);
+                        Thread.Sleep(750);
+                    }
+                }
+                StaticConsoleHelper.TalkPause(result.ClosingLine);
             }
-
-            //apply luck to losers
+            catch (Exception ex)
+            {
+                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
+                _gameRepo.LogException(Data, $"Fighting Phase exception {currentFile} line {currentLine}\n", ex, false);
+            }
+            _gameService.AdvancePhase(Data);
+            return true;
         }
+
+        #endregion fight
+
+        #region night
+
+        private bool NightPhase()
+        {
+            try
+            {
+                AllPlayers = _playerService.SortPlayersByWins(AllPlayers);
+                Data.Parks = _parkService.AddParts(Data.Parks, AllPlayers.Length);
+                Data.Parks = _parkService.HalveParts(Data.Parks);
+                Data.GameDayNumber++;
+                _gameRepo.SaveGame(Data);
+            }
+            catch (Exception ex)
+            {
+                int currentLine = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber();
+                _gameRepo.LogException(Data, $"End of Day Phaseexception {currentFile} line {currentLine}\n", ex, false);
+            }
+            _gameService.AdvancePhase(Data);
+            return true;
+        }
+
+        #endregion night 
         private bool RunMenu()
         {
             bool gameStatus = true;

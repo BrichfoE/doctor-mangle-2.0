@@ -16,10 +16,9 @@ namespace doctor_mangle.services
         {
             this._rng = rng;
         }
-
-        public Battle MonsterFight(PlayerData blue, PlayerData green)
+        public BattleResult MonsterFight(PlayerData blue, PlayerData green)
         {
-            var script = new Battle()
+            var script = new BattleResult()
             {
                 BlueCorner = blue,
                 GreenCorner = green

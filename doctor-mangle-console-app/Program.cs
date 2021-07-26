@@ -1,5 +1,4 @@
-﻿using doctor_mangle;
-using doctor_mangle.interfaces;
+﻿using doctor_mangle.interfaces;
 using doctor_mangle.models.parts;
 using doctor_mangle.services;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +25,7 @@ namespace doctor_mangle_console_app
             return Host.CreateDefaultBuilder(args)
                 .ConfigureServices(services => {
                     _ = services.AddScoped<IGameService, GameService>()
+                        .AddTransient<IArenaService, ArenaService>()
                         .AddTransient<IBattleService, BattleService>()
                         .AddTransient<IMonsterService, MonsterService>()
                         .AddTransient<IParkService, ParkService>()
