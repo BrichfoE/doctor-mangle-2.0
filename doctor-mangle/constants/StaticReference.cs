@@ -48,6 +48,15 @@ namespace doctor_mangle.constants
         Technique = 4,
     }
 
+    public enum Phase
+    {
+        Init = 0,
+        Search = 1,
+        Build = 2,
+        Fight = 3,
+        Night = 4
+    }
+
     public static class StaticReference
     {
 

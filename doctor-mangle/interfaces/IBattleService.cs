@@ -7,7 +7,7 @@ namespace doctor_mangle.interfaces
 {
     public interface IBattleService
     {
-        Battle MonsterFight(PlayerData blue, PlayerData green);
+        BattleResult MonsterFight(PlayerData blue, PlayerData green);
 
         BodyPart GetTarget(MonsterData targetMonster, string attackerName, bool criticalHit);
 

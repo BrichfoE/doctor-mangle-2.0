@@ -5,6 +5,7 @@ using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using doctor_mangle.services;
 using doctor_mangle_data.models;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using System;
@@ -18,11 +19,13 @@ namespace doctor_mangle.test.services
     {
         private IGameService GetService()
         {
+            var mLogger = new Mock<ILogger<IGameService>>();
             var mPlayerService = new Mock<IPlayerService>();
             var mParkService = new Mock<IParkService>();
             var mRandom = new Mock<Random>();
             var mPartComparer = new Mock<IComparer<BodyPart>>();
             return new GameService(
+                mLogger.Object,
                 mPlayerService.Object,
                 mParkService.Object,
                 mPartComparer.Object,
@@ -119,7 +122,9 @@ namespace doctor_mangle.test.services
 
             var mRandom = new Mock<Random>();
             var mPartComparer = new Mock<IComparer<BodyPart>>();
+            var mLogger = new Mock<ILogger<IGameService>>();
             var gameService = new GameService(
+                mLogger.Object,
                 mPlayerService.Object,
                 mParkService.Object,
                 mPartComparer.Object,
@@ -201,11 +206,13 @@ namespace doctor_mangle.test.services
             // Arrange
             var parkInt = 1;
 
+            var mLogger = new Mock<ILogger<IGameService>>();
             var mPlayerService = new Mock<IPlayerService>();
             var mParkService = new Mock<IParkService>();
             var mRandom = TestUtils.GetMockRandom_Next(parkInt);
             var mPartComparer = new Mock<IComparer<BodyPart>>();
             var gameService = new GameService(
+                mLogger.Object,
                 mPlayerService.Object,
                 mParkService.Object,
                 mPartComparer.Object,

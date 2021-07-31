@@ -151,5 +151,30 @@ namespace doctor_mangle.services
             }
             return locations;
         }
+
+        public bool SearchForPart(ParkData park, out BodyPart part)
+        {
+            if (park.PartsList.Count > 0)
+            {
+                part = park.PartsList.Last();
+                park.PartsList.RemoveLast();
+                return true;
+            }
+            else
+            {
+                part = null;
+                return false;
+            }            
+        }
+
+        public string PrintPartCounts(ParkData[] parks)
+        {
+            var result = string.Empty;
+            foreach (var park in parks)
+            {
+                result += $"There are {park.PartsList.Count} parts left in the {park.ParkName}.\r\n";
+            }
+            return result;
+        }
     }
 }

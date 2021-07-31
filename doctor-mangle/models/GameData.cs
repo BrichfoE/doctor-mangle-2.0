@@ -1,4 +1,5 @@
-﻿using doctor_mangle.models.monsters;
+﻿using doctor_mangle.constants;
+using doctor_mangle.models.monsters;
 using doctor_mangle_data.models;
 using System.Collections.Generic;
 
@@ -21,6 +22,7 @@ namespace doctor_mangle.models
         public PlayerData[] AiPlayers { get; set; }
         public List<MonsterGhost> Graveyard { get; set; }
         public int GameDayNumber { get; set; }
+        public Phase GamePhase { get; set; }
     }
 }
 

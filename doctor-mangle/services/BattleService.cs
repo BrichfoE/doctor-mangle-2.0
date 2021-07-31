@@ -16,10 +16,9 @@ namespace doctor_mangle.services
         {
             this._rng = rng;
         }
-
-        public Battle MonsterFight(PlayerData blue, PlayerData green)
+        public BattleResult MonsterFight(PlayerData blue, PlayerData green)
         {
-            var script = new Battle()
+            var script = new BattleResult()
             {
                 BlueCorner = blue,
                 GreenCorner = green
@@ -77,7 +76,7 @@ namespace doctor_mangle.services
 
                 if (round.AttackTarget.PartDurability <= 0)
                 {
-                    script.Text.Add($"{round.Defender}'s {round.AttackTarget.PartName} has been destroyed!");
+                    script.Text.Add($"{round.Defender.Name}'s {round.AttackTarget.PartName} has been destroyed!");
                 }
 
                 if (round.Defender.CanFight)
@@ -98,7 +97,7 @@ namespace doctor_mangle.services
 
                     if (round.ReplyTarget.PartDurability <= 0)
                     {
-                        script.Text.Add($"{round.Attacker}'s {round.ReplyTarget.PartName} has been destroyed!");
+                        script.Text.Add($"{round.Attacker.Name}'s {round.ReplyTarget.PartName} has been destroyed!");
                     }
                 }
             }
@@ -116,7 +115,7 @@ namespace doctor_mangle.services
                 green.WinsCount ++;
                 green.Monster.Wins ++;
             }
-            script.Text.Add($"{script.Winner}'s opponent can no longer put a fight.\r\n{script.Winner} is victorious!");
+            script.Text.Add($"{script.Winner.Name}'s opponent can no longer put a fight.\r\n{script.Winner.Name} is victorious!");
             blue.FightsCount ++;
             blue.Monster.Fights ++;
             green.FightsCount ++;

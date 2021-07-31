@@ -1,6 +1,7 @@
 ﻿using doctor_mangle.constants;
 using doctor_mangle.interfaces;
 using doctor_mangle.models;
+using doctor_mangle.models.monsters;
 using doctor_mangle.models.parts;
 using System;
 using System.Collections.Generic;
@@ -258,6 +259,47 @@ namespace doctor_mangle.services
                 player.WorkshopCuppoard.Add(item);
             }
             player._legs.Clear();
+        }
+
+        public void TryBuildMonster(PlayerData player)
+        {
+            var monst = new List<BodyPart>();
+
+            if (player.Monster != null)
+            {
+                player.WorkshopCuppoard.AddRange(player.Monster.Parts);
+                player.Monster.Parts.Clear();
+            }
+
+            bool hasHead = false;
+            bool hasTorso = false;
+            for (int i = player.WorkshopCuppoard.Count - 1; i >= 0; i--)
+            {
+                var item = player.WorkshopCuppoard[i];
+                if (item.PartDurability > 0)
+                {
+                    monst.Add(item);
+                    hasHead = hasHead || item.GetType() == typeof(Head);
+                    hasTorso = hasTorso || item.GetType() == typeof(Torso);
+                }
+                else
+                {
+                    this.ScrapItem(player.SpareParts, player.WorkshopCuppoard, i);
+                }
+            }
+            // ensure ai has a viable monster
+            if (hasHead && hasTorso && monst.Count > 2)
+            {
+                if (player.Monster == null)
+                {
+                    player.Monster = new MonsterData(player.Name + "'s Monster", monst);
+                }
+                else
+                {
+                    player.Monster.Parts.AddRange(monst);
+                }
+                player.WorkshopCuppoard.Clear();
+            }
         }
     }
 }
